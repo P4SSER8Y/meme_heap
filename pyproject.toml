@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "meme-heap"
+version = "0.1.0"
+description = ""
+authors = ["P4SSER8Y <P4SSER8Y@outlook.com>"]
+readme = "README.md"
+packages = [{include = "meme_heap"}]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+uvicorn = "^0.20.0"
+fastapi = "^0.87.0"
+python-multipart = "^0.0.5"
+aiofiles = "^22.1.0"
+PyYAML = "^6.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,6 +1,7 @@
 from typing import List, Optional
 import fastapi
 import fastapi.staticfiles
+from fastapi import Depends, HTTPException, status
 from uuid import uuid4
 from datetime import datetime
 import re
@@ -12,7 +13,7 @@ import logging
 from . import db
 
 logger = logging.getLogger("meme")
-app = fastapi.APIRouter(tags=['meme'])
+app = fastapi.APIRouter()
 statics = {}
 
 DATA_PATH = pathlib.Path(os.environ.get("MEME_DATA_PATH", "./data"))
@@ -36,20 +37,15 @@ async def get_user_from_token(token: str = fastapi.Header(...)):
     if user:
         return user.user
     else:
-        raise fastapi.HTTPException(fastapi.status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
 
 def get_tags(tag: Optional[str]):
     return [x for x in re.split(r'[,，]', tag) if len(x) > 0]
 
 
-@app.get('/user/get', tags=['user'])
-async def get_user(user=fastapi.Depends(get_user_from_token)):
-    return {"user": user}
-
-
 @app.post('/', tags=['meme'])
-async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fastapi.Body(''), user=fastapi.Depends(get_user_from_token)):
+async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fastapi.Body(''), user=Depends(get_user_from_token)):
     uuid = str(uuid4())
     tags = get_tags(tags)
     ext = pathlib.Path(file.filename).suffix
@@ -72,12 +68,12 @@ async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fasta
 
 
 @app.get('/', tags=['meme'])
-async def query(tag: List[str] = fastapi.Query(...), user=fastapi.Depends(get_user_from_token)):
+async def query(tag: List[str] = fastapi.Query(...), user=Depends(get_user_from_token)):
     return tag
 
 
 @app.delete('/', tags=['meme'])
-async def delete(uuid: str = fastapi.Query(...), user=fastapi.Depends(get_user_from_token)):
+async def delete(uuid: str = fastapi.Query(...), user=Depends(get_user_from_token)):
     try:
         meta_path = META_DATA_PATH.joinpath(f'{uuid}.yml')
         with open(meta_path, 'r') as f:
@@ -98,15 +94,20 @@ async def delete(uuid: str = fastapi.Query(...), user=fastapi.Depends(get_user_f
             os.remove(thumbnail_path)
 
     except Exception as e:
-        raise fastapi.HTTPException(fastapi.status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
     return {"uuid": uuid}
 
 
+@app.get('/user/get', tags=['user'])
+async def get_user(user=Depends(get_user_from_token)):
+    return {"user": user}
+
+
 @app.put('/tag/', tags=['tags'])
-async def tag_add(uuid: str = fastapi.Query(...), user=fastapi.Depends(get_user_from_token)):
+async def tag_add(uuid: str = fastapi.Query(...), user=Depends(get_user_from_token)):
     pass
 
 
 @app.delete('/tag/', tags=['tags'])
-async def tag_delete(uuid: str = fastapi.Query(...), user=fastapi.Depends(get_user_from_token)):
+async def tag_delete(uuid: str = fastapi.Query(...), user=Depends(get_user_from_token)):
     pass

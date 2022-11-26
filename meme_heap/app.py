@@ -11,7 +11,7 @@ import aiofiles
 import logging
 
 logger = logging.getLogger("meme")
-app = fastapi.FastAPI()
+app = fastapi.APIRouter()
 
 DATA_PATH = os.environ.get("MEME_DATA_PATH", "./static")
 

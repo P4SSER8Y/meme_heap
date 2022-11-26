@@ -4,7 +4,7 @@ __all__ = ["MemeRouter"]
 
 class MemeRouter(FastAPIRouterWrapper):
     from .app import app, statics
-    from .db import startup, shutdown
+    from .crud import startup, shutdown
     app = app
     statics = statics
     startup_handler = [startup]

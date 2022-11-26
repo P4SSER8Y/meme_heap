@@ -1,7 +1,7 @@
 from typing import List, Optional
 import fastapi
 import fastapi.staticfiles
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Query, Body
 from uuid import uuid4
 from datetime import datetime
 import re
@@ -10,7 +10,7 @@ import yaml
 import pathlib
 import aiofiles
 import logging
-from . import db
+from . import crud
 
 logger = logging.getLogger("meme")
 app = fastapi.APIRouter()
@@ -28,24 +28,26 @@ statics['/raw'] = RAW_DATA_PATH
 statics['/thumbnail'] = THUMBNAIL_DATA_PATH
 
 
-async def get_user_from_token(token: str = fastapi.Header(...)):
+async def get_user_from_token(token: str = Query(...)):
     from hashlib import sha1
     token = sha1(token.encode()).hexdigest()
-    session = db.SessionLocal()
-    user = db.get_user(session, token)
+    session = crud.SessionLocal()
+    user = crud.get_user_from_token(session, token)
     session.close()
     if user:
-        return user.user
+        return user.name
     else:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
 
 def get_tags(tag: Optional[str]):
-    return [x for x in re.split(r'[,，]', tag) if len(x) > 0]
+    if tag is None:
+        return []
+    return [x.strip() for x in re.split(r'[,，]', tag) if len(x) > 0]
 
 
 @app.post('/', tags=['meme'])
-async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fastapi.Body(''), user=Depends(get_user_from_token)):
+async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fastapi.Body(''), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
     uuid = str(uuid4())
     tags = get_tags(tags)
     ext = pathlib.Path(file.filename).suffix
@@ -64,16 +66,26 @@ async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fasta
             "content-type": file.content_type, "filename": filename, "owner": user}
     with open(pathlib.Path(META_DATA_PATH, f"{uuid}.yml"), 'w') as f:
         yaml.dump(data, f)
+    crud.file_add(db, uuid, filename, user)
+    for tag in tags:
+        crud.tag_add(db, uuid, tag, user)
     return data
 
 
 @app.get('/', tags=['meme'])
-async def query(tag: List[str] = fastapi.Query(...), user=Depends(get_user_from_token)):
-    return tag
+async def query(tag: str = Query(None), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+    tags = get_tags(tag)
+    result = crud.get_all_files(db, user)
+    for i in range(0, len(tags)):
+        t = crud.get_files_by_tag(db, tags[i], user)
+        result = [x for x in result if x in t]
+    print(result)
+    result = [crud.get_file_info_by_uuid(db, x[0]) for x in result]
+    return result
 
 
 @app.delete('/', tags=['meme'])
-async def delete(uuid: str = fastapi.Query(...), user=Depends(get_user_from_token)):
+async def delete(uuid: str = Query(...), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
     try:
         meta_path = META_DATA_PATH.joinpath(f'{uuid}.yml')
         with open(meta_path, 'r') as f:
@@ -98,16 +110,62 @@ async def delete(uuid: str = fastapi.Query(...), user=Depends(get_user_from_toke
     return {"uuid": uuid}
 
 
-@app.get('/user/get', tags=['user'])
-async def get_user(user=Depends(get_user_from_token)):
-    return {"user": user}
+@app.get('/tag/', tags=['tags'])
+async def get_all_tags(user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+    return crud.tag_get_all(db, user)
 
 
 @app.put('/tag/', tags=['tags'])
-async def tag_add(uuid: str = fastapi.Query(...), user=Depends(get_user_from_token)):
-    pass
+async def add_tag(tag: str = Query(...), uuid: str = Query(...), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+    if not crud.check_if_file_uuid_exist(db, uuid, user):
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    tags = get_tags(tag)
+    for item in tags:
+        crud.tag_add(db, uuid, item, user)
+    return {'uuid': uuid, 'tags': tags}
 
 
 @app.delete('/tag/', tags=['tags'])
-async def tag_delete(uuid: str = fastapi.Query(...), user=Depends(get_user_from_token)):
-    pass
+async def delete_tag(tag: str = Query(...), uuid: str = Query(...), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+    if not crud.check_if_file_uuid_exist(db, uuid, user):
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    tags = get_tags(tag)
+    for item in tags:
+        crud.tag_delete(db, uuid, item, user)
+    return {'uuid': uuid, 'tags': tags}
+
+
+# @app.get('/user/', tags=['user'])
+# async def get_user(user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+#     return {"user": user, 'admin': crud.is_admin(db, user)}
+
+
+@app.put('/user/', tags=['user'])
+async def new_user(name: str = Body(...), password: str = Body(...), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+    if not crud.is_admin(db, user):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+    if crud.is_user(db, name):
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
+    return crud.create_user(db, name, password)
+
+
+@app.delete('/user/', tags=['user'])
+async def delete_user(name: str = Body(...), password: str = Body(...), db=Depends(crud.get_db)):
+    if not crud.check_user_password(db, name, password):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+    return crud.delete_user(db, name)
+
+
+@app.put('/user/token/', tags=['user'])
+async def add_token(name: str = Body(...), password: str = Body(...), db=Depends(crud.get_db)):
+    if not crud.check_user_password(db, name, password):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+    return crud.token_add(db, name)
+
+
+@app.delete('/user/token/', tags=['user'])
+async def delete_token(name: str = Body(...), password: str = Body(...), token: str = Body(...), db=Depends(crud.get_db)):
+    if not crud.check_user_password(db, name, password):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+    crud.token_delete(db, token)
+    return {'name': name, 'token': token}

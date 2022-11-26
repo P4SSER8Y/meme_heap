@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "meme-heap"
-version = "0.3.0"
+version = "0.4.0"
 description = ""
 authors = ["P4SSER8Y <P4SSER8Y@outlook.com>"]
 readme = "README.md"
@@ -14,6 +14,11 @@ fastapi = "^0.87.0"
 python-multipart = "^0.0.5"
 aiofiles = "^22.1.0"
 PyYAML = "^6.0"
+SQLAlchemy = "^1.4"
+aiosqlite = "^0.17.0"
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "^2.0.0"
 
 [tool.autopep8]
 max_line_length=128

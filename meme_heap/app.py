@@ -9,6 +9,7 @@ import yaml
 import pathlib
 import aiofiles
 import logging
+from . import db
 
 logger = logging.getLogger("meme")
 app = fastapi.APIRouter(tags=['meme'])
@@ -25,16 +26,15 @@ os.makedirs(THUMBNAIL_DATA_PATH, exist_ok=True)
 statics['/raw'] = RAW_DATA_PATH
 statics['/thumbnail'] = THUMBNAIL_DATA_PATH
 
-TOKENS = {
-    "81fe8bfe87576c3ecb22426f8e57847382917acf": "troy",  # abcd
-}
-
 
 async def get_user_from_token(token: str = fastapi.Header(...)):
     from hashlib import sha1
     token = sha1(token.encode()).hexdigest()
-    if token in TOKENS.keys():
-        return TOKENS[token]
+    session = db.SessionLocal()
+    user = db.get_user(session, token)
+    session.close()
+    if user:
+        return user.user
     else:
         raise fastapi.HTTPException(fastapi.status.HTTP_404_NOT_FOUND)
 
@@ -43,12 +43,12 @@ def get_tags(tag: Optional[str]):
     return [x for x in re.split(r'[,，]', tag) if len(x) > 0]
 
 
-@app.get('/get_user')
+@app.get('/user/get', tags=['user'])
 async def get_user(user=fastapi.Depends(get_user_from_token)):
     return {"user": user}
 
 
-@app.post('/')
+@app.post('/', tags=['meme'])
 async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fastapi.Body(''), user=fastapi.Depends(get_user_from_token)):
     uuid = str(uuid4())
     tags = get_tags(tags)
@@ -71,12 +71,12 @@ async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fasta
     return data
 
 
-@app.get('/')
+@app.get('/', tags=['meme'])
 async def query(tag: List[str] = fastapi.Query(...), user=fastapi.Depends(get_user_from_token)):
     return tag
 
 
-@app.delete('/')
+@app.delete('/', tags=['meme'])
 async def delete(uuid: str = fastapi.Query(...), user=fastapi.Depends(get_user_from_token)):
     try:
         meta_path = META_DATA_PATH.joinpath(f'{uuid}.yml')
@@ -102,11 +102,11 @@ async def delete(uuid: str = fastapi.Query(...), user=fastapi.Depends(get_user_f
     return {"uuid": uuid}
 
 
-@app.put('/tag/')
+@app.put('/tag/', tags=['tags'])
 async def tag_add(uuid: str = fastapi.Query(...), user=fastapi.Depends(get_user_from_token)):
     pass
 
 
-@app.delete('/tag/')
+@app.delete('/tag/', tags=['tags'])
 async def tag_delete(uuid: str = fastapi.Query(...), user=fastapi.Depends(get_user_from_token)):
     pass

@@ -30,3 +30,6 @@ Environment Variables
 + MEME_DB_URL:
     + Description: database URL, see [SQLAlchemy Engine Docs](https://www.osgeo.cn/sqlalchemy/core/engines.html)
     + Default: `sqlite:///${MEME_DATA_PATH}/sqlite.db`
++ MEME_TOKEN_SALT:
+    + Description: salt of token
+    + Default: `memeMEME1v131v13`

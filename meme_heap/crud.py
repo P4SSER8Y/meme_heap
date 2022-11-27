@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker, Session
 import os
 import pathlib
 from . import models
+import bcrypt
 
 DEFAULT_DB_PATH = "sqlite:///{}".format(pathlib.Path(os.environ.get('MEME_DATA_PATH', './data'), 'sqlite.db'))
 DB_URL = os.environ.get('MEME_DB_URL', DEFAULT_DB_PATH)
@@ -11,6 +12,8 @@ DB_URL = os.environ.get('MEME_DB_URL', DEFAULT_DB_PATH)
 DEFAULT_ADMIN_USER = os.environ.get('MEME_DB_ADMIN', 'admin')
 DEFAULT_ADMIN_PASSWORD = os.environ.get('MEME_DB_ADMIN_PASSWORD', 'admin')
 DEFAULT_ADMIN_TOKEN = os.environ.get('MEME_DB_ADMIN_TOKEN', 'admin')
+TOKEN_SALT = os.environ.get('MEME_TOKEN_SALT', 'memeMEME1v131v13')
+
 
 engine = create_engine(DB_URL, connect_args={'check_same_thread': False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
@@ -30,13 +33,18 @@ def get_db():
         db.close()
 
 
-def sha1_encode(raw: str):
+def get_password_hash(raw: str):
+    import bcrypt
+    return bcrypt.hashpw(raw.encode('utf-8'), bcrypt.gensalt())
+
+
+def get_token_hash(raw: str):
     from hashlib import sha1
-    return sha1(raw.encode()).hexdigest()
+    return sha1((raw + TOKEN_SALT).encode()).hexdigest()
 
 
 def create_user(db: Session, name: str, pwd: str, admin: bool = False):
-    user = models.User(name=name, admin=admin, password=sha1_encode(pwd))
+    user = models.User(name=name, admin=admin, password=get_password_hash(pwd))
     db.add(user)
     return {"name": name, "admin": admin}
 
@@ -52,19 +60,21 @@ def delete_user(db: Session, name: str):
 
 
 def check_user_password(db: Session, name: str, password: str):
-    query = db.query(models.User) \
-        .filter(models.User.name == name, models.User.password == sha1_encode(password)) \
-        .one_or_none()
-    return query is not None
+    query = db.query(models.User.password).filter(models.User.name == name).one_or_none()
+    if query is None:
+        return False
+    hash = query[0]
+    print(hash)
+    return bcrypt.checkpw(password.encode('utf-8'), hash)
 
 
 def token_add(db: Session, name: str, token: Optional[str] = None):
     from random import choice
     if token is None:
         token = ""
-        for _ in range(64):
+        for _ in range(32):
             token += choice("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    sha = sha1_encode(token)
+    sha = get_token_hash(token)
     query = models.Token(name=name, token=sha)
     db.add(query)
     return {"name": name, "token": token}
@@ -72,7 +82,7 @@ def token_add(db: Session, name: str, token: Optional[str] = None):
 
 def token_delete(db: Session, token: str):
     from hashlib import sha1
-    db.query(models.Token).filter(models.Token.token == sha1_encode(token)).delete()
+    db.query(models.Token).filter(models.Token.token == get_token_hash(token)).delete()
 
 
 def token_get_all(db: Session, name: str):
@@ -80,7 +90,7 @@ def token_get_all(db: Session, name: str):
 
 
 def get_user_from_token(db: Session, token: str):
-    return db.query(models.Token).filter(models.Token.token == token).first()
+    return db.query(models.Token).filter(models.Token.token == get_token_hash(token)).first()
 
 
 def is_user(db: Session, name: str):

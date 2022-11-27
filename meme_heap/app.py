@@ -28,12 +28,8 @@ statics['/raw'] = RAW_DATA_PATH
 statics['/thumbnail'] = THUMBNAIL_DATA_PATH
 
 
-async def get_user_from_token(token: str = Query(...)):
-    from hashlib import sha1
-    token = sha1(token.encode()).hexdigest()
-    session = crud.SessionLocal()
-    user = crud.get_user_from_token(session, token)
-    session.close()
+async def get_user_from_token(token: str = Query(...), db=Depends(crud.get_db)):
+    user = crud.get_user_from_token(db, token)
     if user:
         return user.name
     else:

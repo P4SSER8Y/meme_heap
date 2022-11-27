@@ -10,8 +10,8 @@ app = FastAPI()
 
 for item in routers:
     app.include_router(item.app, prefix='/meme')
-    for key in item.statics.keys():
-        app.mount(f'/meme{key}', StaticFiles(directory=item.statics[key]))
+    for func in item.statics_handler:
+        func(app, '/meme')
 
 
 @app.on_event("startup")

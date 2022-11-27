@@ -1,9 +1,9 @@
-from fastapi import APIRouter
-from pathlib import Path
-from typing import Coroutine, Dict, List
 
 class FastAPIRouterWrapper():
+    from fastapi import APIRouter, FastAPI
+    from typing import Callable, Coroutine, List
+
     app: APIRouter = None
-    statics: Dict[str, Path] = []
+    statics_handler: List[Callable[[FastAPI, str], None]] = []
     startup_handler: List[Coroutine] = []
     shutdown_handler: List[Coroutine] = []

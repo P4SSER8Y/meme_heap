@@ -1,6 +1,6 @@
 from typing import List, Optional
 import fastapi
-import fastapi.staticfiles
+from fastapi.staticfiles import StaticFiles
 from fastapi import Depends, HTTPException, status, Query, Body
 from uuid import uuid4
 from datetime import datetime
@@ -24,8 +24,11 @@ os.makedirs(META_DATA_PATH, exist_ok=True)
 THUMBNAIL_DATA_PATH = DATA_PATH.joinpath('thumbnail')
 os.makedirs(THUMBNAIL_DATA_PATH, exist_ok=True)
 
-statics['/raw'] = RAW_DATA_PATH
-statics['/thumbnail'] = THUMBNAIL_DATA_PATH
+
+def statics_handler(app: fastapi.FastAPI, prefix: str):
+    app.mount(f"{prefix}/raw", StaticFiles(directory=RAW_DATA_PATH))
+    app.mount(f"{prefix}/thumbnail", StaticFiles(directory=THUMBNAIL_DATA_PATH))
+    app.mount(f"{prefix}/ui", StaticFiles(directory=pathlib.Path(__file__).parent.joinpath('ui'), html=True))
 
 
 async def get_user_from_token(token: str = Query(...), db=Depends(crud.get_db)):

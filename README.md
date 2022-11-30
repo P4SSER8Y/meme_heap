@@ -1,5 +1,6 @@
 Meme Heap
 ===========
+[![CI](https://github.com/P4SSER8Y/meme_heap/actions/workflows/ocean.yaml/badge.svg)](https://github.com/P4SSER8Y/meme_heap/actions/workflows/ocean.yaml)
 
 A storage for memes, with features:
 - multiple users

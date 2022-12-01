@@ -8,6 +8,7 @@ A storage for memes, with features:
 - add or remove memes
 - add or remove tags
 - auto generate thumbnails if file-type supported
+- CI test since Python 3.8
 
 Usage
 -----------

@@ -7,7 +7,7 @@ from . import models
 import bcrypt
 
 DATABASE_PATH = pathlib.Path(os.environ.get('MEME_DATA_PATH', './data'), 'sqlite.db')
-os.makedirs(DATABASE_PATH, exist_ok=True)
+os.makedirs(DATABASE_PATH.parent, exist_ok=True)
 DEFAULT_DB_PATH = "sqlite:///{}".format(DATABASE_PATH)
 DB_URL = os.environ.get('MEME_DB_URL', DEFAULT_DB_PATH)
 

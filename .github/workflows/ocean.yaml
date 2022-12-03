@@ -1,8 +1,11 @@
-name: CI
-on: [push]
+name: smoke-test
+on:
+  push:
+    branches:
+      - ocean
 
 jobs:
-  smoke:
+  smoke-test:
     strategy:
       fail-fast: false
       matrix:

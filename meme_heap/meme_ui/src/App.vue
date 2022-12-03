@@ -11,7 +11,7 @@ import BigImg from './BigImg.vue';
 export default {
   data() {
     return {
-      token: 't0ken4tr0y',
+      token: '',
       tags: "",
       records: () => [],
       allTags: [],

@@ -66,7 +66,6 @@ def check_user_password(db: Session, name: str, password: str):
     if query is None:
         return False
     hash = query[0]
-    print(hash)
     return bcrypt.checkpw(password.encode('utf-8'), hash)
 
 
@@ -120,9 +119,14 @@ def tag_delete(db: Session, uuid: str, tag: str, owner: str):
     db.query(models.Tag).filter(models.Tag.uuid == uuid, models.Tag.tag == tag, models.Tag.owner == owner).delete()
 
 
-def file_add(db: Session, uuid: str, filename: str, owner: str):
-    data = models.File(uuid=uuid, filename=filename, owner=owner)
+def file_add(db: Session, uuid: str, filename: str, owner: str, thumbnail: str):
+    data = models.File(uuid=uuid, filename=filename, owner=owner, thumbnail=thumbnail)
     db.add(data)
+
+
+def file_delete(db: Session, uuid: str):
+    db.query(models.Tag).filter(models.Tag.uuid == uuid).delete()
+    db.query(models.File).filter(models.File.uuid == uuid).delete()
 
 
 def get_files_by_tag(db: Session, tag: str, owner: str):
@@ -133,7 +137,7 @@ def get_file_info_by_uuid(db: Session, uuid: str):
     tags = db.query(models.Tag.tag).filter(models.Tag.uuid == uuid).all()
     tags = [x['tag'] for x in tags]
     filename = db.query(models.File).filter(models.File.uuid == uuid).one()
-    return {'tags': tags, 'filename': filename.filename}
+    return {'tags': tags, 'filename': filename.filename, "thumbnail": filename.thumbnail}
 
 
 def get_all_files(db: Session, owner: str):

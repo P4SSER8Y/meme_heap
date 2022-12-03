@@ -11,6 +11,7 @@ import pathlib
 import aiofiles
 import logging
 from . import crud
+from PIL import Image
 
 logger = logging.getLogger("meme")
 app = fastapi.APIRouter()
@@ -28,7 +29,7 @@ os.makedirs(THUMBNAIL_DATA_PATH, exist_ok=True)
 def statics_handler(app: fastapi.FastAPI, prefix: str):
     app.mount(f"{prefix}/raw", StaticFiles(directory=RAW_DATA_PATH))
     app.mount(f"{prefix}/thumbnail", StaticFiles(directory=THUMBNAIL_DATA_PATH))
-    app.mount(f"{prefix}/ui", StaticFiles(directory=pathlib.Path(__file__).parent.joinpath('meme_ui/dist'), html=True, check_dir=False))
+    app.mount(f"{prefix}", StaticFiles(directory=pathlib.Path(__file__).parent.joinpath('meme_ui/dist'), html=True, check_dir=False))
 
 
 async def get_user_from_token(token: str = Query(...), db=Depends(crud.get_db)):
@@ -45,14 +46,31 @@ def get_tags(tag: Optional[str]):
     return [x.strip() for x in re.split(r'[,，]', tag) if len(x) > 0]
 
 
-@app.post('/', tags=['meme'])
+async def generate_thumbnail(filename: str):
+    suffix = pathlib.Path(filename).suffix.lower()
+    try:
+        img = Image.open(RAW_DATA_PATH.joinpath(filename))
+        img.seek(0)
+        img = img.convert('RGB')
+        if img.width >= 256:
+            height = img.height * 256 // img.width
+            img.resize([256, height])
+        tn = pathlib.Path(filename).stem + '.jpg'
+        img.save(pathlib.Path(THUMBNAIL_DATA_PATH.joinpath(tn)))
+        return tn
+    except Exception as e:
+        print(f"{e}")
+        return None
+
+
+@app.post('/meme/', tags=['meme'])
 async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fastapi.Body(''), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
     uuid = str(uuid4())
     tags = get_tags(tags)
-    ext = pathlib.Path(file.filename).suffix
+    ext = pathlib.Path(file.filename).suffix.lower()
     size = 0
     ts = datetime.now()
-    filename = f"{uuid}{ext}"
+    filename = f"{uuid}{ext}".lower()
     os.makedirs(pathlib.Path(DATA_PATH), exist_ok=True)
     async with aiofiles.open(pathlib.Path(RAW_DATA_PATH, filename), 'wb') as f:
         while True:
@@ -61,17 +79,18 @@ async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fasta
                 break
             size += len(raw)
             await f.write(raw)
+    thumbnail = await generate_thumbnail(filename)
     data = {"uuid": uuid, "tags": tags, "size": size, "timestamp": ts,
-            "content-type": file.content_type, "filename": filename, "owner": user}
+            "content-type": file.content_type, "filename": filename, "owner": user, "thumbnail": thumbnail}
     with open(pathlib.Path(META_DATA_PATH, f"{uuid}.yml"), 'w') as f:
         yaml.dump(data, f)
-    crud.file_add(db, uuid, filename, user)
+    crud.file_add(db, uuid, filename, user, thumbnail)
     for tag in tags:
         crud.tag_add(db, uuid, tag, user)
     return data
 
 
-@app.get('/', tags=['meme'])
+@app.get('/meme/', tags=['meme'])
 async def query(tag: str = Query(None), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
     tags = get_tags(tag)
     result = crud.get_all_files(db, user)
@@ -83,7 +102,7 @@ async def query(tag: str = Query(None), user=Depends(get_user_from_token), db=De
     return result
 
 
-@app.delete('/', tags=['meme'])
+@app.delete('/meme/', tags=['meme'])
 async def delete(uuid: str = Query(...), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
     try:
         meta_path = META_DATA_PATH.joinpath(f'{uuid}.yml')
@@ -103,9 +122,11 @@ async def delete(uuid: str = Query(...), user=Depends(get_user_from_token), db=D
         if thumbnail:
             thumbnail_path = THUMBNAIL_DATA_PATH.joinpath(thumbnail)
             os.remove(thumbnail_path)
-
     except Exception as e:
+        print(f"{e}")
         raise HTTPException(status.HTTP_404_NOT_FOUND)
+    finally:
+        crud.file_delete(db, uuid)
     return {"uuid": uuid}
 
 
@@ -156,10 +177,10 @@ async def delete_user(name: str = Body(...), password: str = Body(...), db=Depen
 
 
 @app.put('/user/token/', tags=['user'])
-async def add_token(name: str = Body(...), password: str = Body(...), db=Depends(crud.get_db)):
+async def add_token(name: str = Body(...), password: str = Body(...), token: str = Body(None), db=Depends(crud.get_db)):
     if not crud.check_user_password(db, name, password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
-    return crud.token_add(db, name)
+    return crud.token_add(db, name, token)
 
 
 @app.delete('/user/token/', tags=['user'])

@@ -29,4 +29,5 @@ class File(Base):
     __tablename__ = 'File'
     uuid = Column(String(length=36), primary_key=True, nullable=False)
     filename = Column(String(length=128), nullable=False)
+    thumbnail = Column(String(length=128), nullable=True)
     owner = Column(ForeignKey('User.name'))

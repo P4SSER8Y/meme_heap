@@ -4,6 +4,7 @@ import { debounce } from 'lodash-es'
 import axios from 'axios'
 import Preview from './Preview.vue';
 import { useCookies } from 'vue3-cookies';
+import BigImg from './BigImg.vue';
 </script>
 
 <script>
@@ -16,6 +17,8 @@ export default {
       allTags: [],
       update: null,
       updateCookies: null,
+      largeVisible: false,
+      largeUrl: "",
     }
   },
   mounted() {
@@ -33,6 +36,10 @@ export default {
     },
     doUpdateCookies() {
       this.cookies.set('token', this.token);
+    },
+    doShowLargeImage(rawUrl) {
+      this.largeUrl = rawUrl;
+      this.largeVisible = true;
     },
   },
   watch: {
@@ -66,8 +73,9 @@ export default {
     <Tags :tags="allTags" />
   </div>
   <div class="waterfall">
-    <Preview class="drop" v-for="item in records" :filename="item.filename" :thumbnail="item.thumbnail" />
+    <Preview class="drop" v-for="item in records" :filename="item.filename" :thumbnail="item.thumbnail" @click="doShowLargeImage('raw/' + item.filename)"/>
   </div>
+  <BigImg :visible="largeVisible" :url="largeUrl" @hide="largeVisible = false" />
 </template>
 
 <style scoped>

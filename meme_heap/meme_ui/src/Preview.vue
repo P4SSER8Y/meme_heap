@@ -22,9 +22,7 @@ export default {
 
 <template>
     <div>
-        <a :href="rawPath">
-            <img class="thumbnail" v-lazy="thumbnailPath" :v-key="thumbnailPath" />
-        </a>
+        <img class="thumbnail" v-lazy="thumbnailPath" :v-key="thumbnailPath" />
     </div>
 </template>
 

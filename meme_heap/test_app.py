@@ -33,5 +33,5 @@ async def shutdown():
 client = TestClient(app)
 
 def test_smoke():
-    response = client.get('/meme')
+    response = client.get('/meme/meme/')
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

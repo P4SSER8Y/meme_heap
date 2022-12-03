@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "meme-heap"
-version = "0.8.0"
+version = "0.9.0"
 description = ""
 authors = ["P4SSER8Y <P4SSER8Y@outlook.com>"]
 readme = "README.md"

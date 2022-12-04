@@ -35,3 +35,7 @@ client = TestClient(app)
 def test_smoke():
     response = client.get('/meme/meme/')
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+def test_ui():
+    response = client.get('/meme/')
+    assert response.status_code == status.HTTP_200_OK

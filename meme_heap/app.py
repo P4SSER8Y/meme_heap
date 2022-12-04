@@ -24,7 +24,7 @@ META_DATA_PATH = DATA_PATH.joinpath('meta')
 os.makedirs(META_DATA_PATH, exist_ok=True)
 THUMBNAIL_DATA_PATH = DATA_PATH.joinpath('thumbnail')
 os.makedirs(THUMBNAIL_DATA_PATH, exist_ok=True)
-UI_PATH = pathlib.Path(os.environ.get("UI_PATH", pathlib.Path(__file__).joinpath('../meme_ui/dist')))
+UI_PATH = pathlib.Path(os.environ.get("UI_PATH", pathlib.Path(__file__).parent.joinpath('../meme_ui/dist')))
 
 
 def statics_handler(app: fastapi.FastAPI, prefix: str):

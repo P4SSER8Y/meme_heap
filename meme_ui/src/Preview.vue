@@ -1,5 +1,6 @@
 <script setup>
 import Tags from "./Tags.vue"
+import { NImage, NEmpty } from "naive-ui";
 </script>
 
 <script>
@@ -21,14 +22,11 @@ export default {
 </script>
 
 <template>
-    <div>
-        <img class="thumbnail" v-lazy="thumbnailPath" :v-key="thumbnailPath" />
-    </div>
+    <n-image :src="thumbnailPath" lazy object-fit="cover" :preview-src="rawPath" :show-toolbar="false" width="256">
+        <n-empty />
+    </n-image>
 </template>
 
 <style scoped>
-.thumbnail {
-    width: 100%;
-    height: auto;
-}
+
 </style>

@@ -18,6 +18,7 @@ export default {
       allTags: [],
       valid: false,
       isLoading: false,
+      update: () => undefined,
     }
   },
   mounted() {
@@ -78,8 +79,8 @@ export default {
   <n-config-provider :theme="darkTheme">
     <n-global-style />
     <div style="position: relative">
-      <n-layout :position="absolute" :native-scroller="false">
-        <n-layout-header bordered class="headline" :position="absolute">
+      <n-layout :native-scroller="false">
+        <n-layout-header bordered class="headline">
           <n-input v-model:value="token" placeholder="token" :status="isLoading ? 'warning' : (valid ? 'success' : 'error'
           )" autosize size="small" style="min-width: 10em">
             <template #prefix>
@@ -98,7 +99,7 @@ export default {
           </n-button>
         </n-layout-header>
 
-        <n-layout :position="absolute" :native-scrollbar="true">
+        <n-layout :native-scrollbar="true">
           <Tags :tags="allTags" @tagClicked="(tag) => tags = tag" />
           <div v-if="valid && (memeCount > 0)" class="waterfall">
             <Preview class="waterdrop" v-for="item in records" :filename="item.filename" :thumbnail="item.thumbnail" />

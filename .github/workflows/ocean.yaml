@@ -15,6 +15,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -24,5 +27,12 @@ jobs:
           poetry-version: ${{ matrix.poetry-version }}
       - name: poetry install
         run: poetry install --with test
+      - name: pnpm install
+        run: pnpm install
+        working-directory: ./meme_ui
+      - name: pnpm build
+        run: pnpm build
+        working-directory: ./meme_ui
       - name: pytest
         run: poetry run pytest
+        working-directory: ./

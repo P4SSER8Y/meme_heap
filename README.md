@@ -14,6 +14,10 @@ Usage
 -----------
 + install
     - `poetry install`
+    - build UI
+        + `cd ./meme_ui`
+        + `pnpm install`
+        + `pnpm build`
 + run
     - `poetry run python main.py`
     - `poetry run uvicorn entry:app`
@@ -35,3 +39,6 @@ Environment Variables
 + MEME_TOKEN_SALT:
     + Description: salt of token
     + Default: `memeMEME1v131v13`
++ UI_PATH:
+    + Description: frontend UI files path
+    + Default: `./meme_ui/dist`

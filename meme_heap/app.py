@@ -24,12 +24,13 @@ META_DATA_PATH = DATA_PATH.joinpath('meta')
 os.makedirs(META_DATA_PATH, exist_ok=True)
 THUMBNAIL_DATA_PATH = DATA_PATH.joinpath('thumbnail')
 os.makedirs(THUMBNAIL_DATA_PATH, exist_ok=True)
+UI_PATH = pathlib.Path(os.environ.get("UI_PATH", pathlib.Path(__file__).joinpath('../meme_ui/dist')))
 
 
 def statics_handler(app: fastapi.FastAPI, prefix: str):
     app.mount(f"{prefix}/raw", StaticFiles(directory=RAW_DATA_PATH))
     app.mount(f"{prefix}/thumbnail", StaticFiles(directory=THUMBNAIL_DATA_PATH))
-    app.mount(f"{prefix}", StaticFiles(directory=pathlib.Path(__file__).parent.joinpath('meme_ui/dist'), html=True, check_dir=False))
+    app.mount(f"{prefix}", StaticFiles(directory=UI_PATH, html=True, check_dir=False))
 
 
 async def get_user_from_token(token: str = Query(...), db=Depends(crud.get_db)):

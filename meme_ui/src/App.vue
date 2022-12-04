@@ -31,8 +31,8 @@ export default {
   },
   methods: {
     doUpdate() {
-      this.client.get('meme/', { params: { token: this.token, tag: this.tags } }).then(res => this.records = res.data);
-      this.client.get("tag/", { params: { token: this.token } }).then(res => this.allTags = res.data.map(x => x.tag));
+      this.client.get('meme/', { params: { token: this.token, tag: this.tags } }).then(res => this.records = res.data).catch(() => this.records = []);
+      this.client.get("tag/", { params: { token: this.token } }).then(res => this.allTags = res.data.map(x => x.tag)).catch(() => this.allTags = []);
     },
     doUpdateCookies() {
       this.cookies.set('token', this.token);
@@ -73,7 +73,8 @@ export default {
     <Tags :tags="allTags" />
   </div>
   <div class="waterfall">
-    <Preview class="drop" v-for="item in records" :filename="item.filename" :thumbnail="item.thumbnail" @click="doShowLargeImage('raw/' + item.filename)"/>
+    <Preview class="drop" v-for="item in records" :filename="item.filename" :thumbnail="item.thumbnail"
+      @click="doShowLargeImage('raw/' + item.filename)" />
   </div>
   <BigImg :visible="largeVisible" :url="largeUrl" @hide="largeVisible = false" />
 </template>
@@ -87,7 +88,7 @@ export default {
 }
 
 .drop a img {
-  align-items:center;
+  align-items: center;
   width: 100%;
   height: auto;
   padding: 1px;

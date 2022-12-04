@@ -11,7 +11,8 @@ export default {
         clicked(tag) {
             this.$emit("tagClicked", tag);
         },
-    }
+    },
+    emits: ['tagClicked'],
 }
 </script>
 

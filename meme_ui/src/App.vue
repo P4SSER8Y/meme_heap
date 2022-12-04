@@ -81,7 +81,7 @@ export default {
       <n-layout :position="absolute" :native-scroller="false">
         <n-layout-header bordered class="headline" :position="absolute">
           <n-input v-model:value="token" placeholder="token" :status="isLoading ? 'warning' : (valid ? 'success' : 'error'
-          )" autosize size="small" style="min-width: 10rem">
+          )" autosize size="small" style="min-width: 10em">
             <template #prefix>
               <n-icon :component="Password16Filled" />
             </template>
@@ -99,7 +99,7 @@ export default {
         </n-layout-header>
 
         <n-layout :position="absolute" :native-scrollbar="true">
-          <Tags :tags="allTags" @tagClicked="(tag) => this.tags = tag" />
+          <Tags :tags="allTags" @tagClicked="(tag) => tags = tag" />
           <div v-if="valid && (memeCount > 0)" class="waterfall">
             <Preview class="waterdrop" v-for="item in records" :filename="item.filename" :thumbnail="item.thumbnail" />
           </div>
@@ -109,7 +109,6 @@ export default {
     </div>
   </n-config-provider>
 </template>
-
 <style scoped>
 .waterfall {
   align-self: center;

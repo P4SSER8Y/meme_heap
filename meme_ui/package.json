@@ -1,5 +1,5 @@
 {
-  "name": "meme_ui",
+  "name": "meme_ui_quasar",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -8,16 +8,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@vicons/fluent": "^0.12.0",
+    "@quasar/extras": "^1.15.7",
     "axios": "^1.2.0",
     "lodash-es": "^4.17.21",
-    "naive-ui": "^2.34.2",
-    "vue": "^3.2.45",
-    "vue-router": "^4.1.6",
-    "vue3-cookies": "^1.0.6"
+    "vue": "^3.2.45"
   },
   "devDependencies": {
+    "@quasar/vite-plugin": "^1.2.3",
     "@vitejs/plugin-vue": "^3.2.0",
+    "quasar": "^2.10.2",
+    "sass": "1.32.12",
     "vite": "^3.2.4"
   }
 }

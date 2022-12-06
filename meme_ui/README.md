@@ -1,4 +1,4 @@
-# meme_ui
+# meme_ui_quasar
 
 This template should help get you started developing with Vue 3 in Vite.
 

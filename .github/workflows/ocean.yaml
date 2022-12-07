@@ -29,13 +29,13 @@ jobs:
         uses: borales/actions-yarn@v4
         with:
           cmd: install
-        working-directory: ./meme_ui
+          dir: ./meme_ui
 
       - name: quasar build
         uses: borales/actions-yarn@v4
         with:
           cmd: quasar build
-        working-directory: ./meme_ui
+          dir: ./meme_ui
 
       - name: pytest
         run: poetry run pytest

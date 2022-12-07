@@ -26,13 +26,13 @@ jobs:
         run: poetry install --with test
 
       - name: yarn install
-        use: borales/actions-yarn@v4
+        uses: borales/actions-yarn@v4
         with:
           cmd: install
         working-directory: ./meme_ui
 
       - name: quasar build
-        use: borales/actions-yarn@v4
+        uses: borales/actions-yarn@v4
         with:
           cmd: quasar build
         working-directory: ./meme_ui

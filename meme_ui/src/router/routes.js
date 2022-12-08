@@ -1,9 +1,8 @@
 
 const routes = [
   {
-    path: '/',
-    component: () => import('layouts/MainLayout.vue'),
-    children: []
+    path: '/gallery',
+    component: () => import('pages/Gallery.vue'),
   },
 
   // Always leave this as last one,

@@ -98,7 +98,6 @@ async def query(tag: str = Query(None), user=Depends(get_user_from_token), db=De
     for i in range(0, len(tags)):
         t = crud.get_files_by_tag(db, tags[i], user)
         result = [x for x in result if x in t]
-    print(result)
     result = [crud.get_file_info_by_uuid(db, x[0]) for x in result]
     return result
 

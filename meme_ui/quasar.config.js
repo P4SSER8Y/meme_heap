@@ -81,7 +81,13 @@ module.exports = configure(function (/* ctx */) {
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#devServer
     devServer: {
       // https: true
-      open: true // opens browser window automatically
+      open: false, // opens browser window automatically
+      proxy: {
+        '^/meme/(raw|thumbnail|meme|token|user|tag)': {
+          target: 'http://localhost:8000/',
+          changeOrigin: true,
+        }
+      }
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#framework

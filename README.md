@@ -42,3 +42,6 @@ Environment Variables
 + UI_PATH:
     + Description: frontend UI files path
     + Default: `./meme_ui/dist`
++ DEVELOP:
+    + Description: enable develop mode
+    + Default: `None`

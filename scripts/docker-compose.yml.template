@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  meme_heap:
+    build: ./
+    container_name: meme_heap
+    restart: unless-stopped
+    volumes:
+      - ../:/app:ro
+      - ${DOCKER_DATA_PATH}:/data:rw
+    ports:
+      - 8000:8000

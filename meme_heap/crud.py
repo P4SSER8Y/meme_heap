@@ -5,6 +5,7 @@ import os
 import pathlib
 from . import models
 import bcrypt
+from loguru import logger
 
 DATABASE_PATH = pathlib.Path(os.environ.get('MEME_DATA_PATH', './data'), 'sqlite.db')
 os.makedirs(DATABASE_PATH.parent, exist_ok=True)
@@ -82,7 +83,6 @@ def token_add(db: Session, name: str, token: Optional[str] = None):
 
 
 def token_delete(db: Session, token: str):
-    from hashlib import sha1
     db.query(models.Token).filter(models.Token.token == get_token_hash(token)).delete()
 
 
@@ -155,8 +155,11 @@ async def startup():
             create_user(session, DEFAULT_ADMIN_USER, DEFAULT_ADMIN_PASSWORD, True)
             token_add(session, DEFAULT_ADMIN_USER, DEFAULT_ADMIN_TOKEN)
             session.commit()
+    except Exception as e:
+        logger.exception('nani?')
     finally:
         session.close()
+    logger.info('hello world')
 
 
 async def shutdown():

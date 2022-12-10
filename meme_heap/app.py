@@ -12,8 +12,8 @@ import aiofiles
 import logging
 from . import crud
 from PIL import Image
+from loguru import logger
 
-logger = logging.getLogger("meme")
 app = fastapi.APIRouter()
 statics = {}
 
@@ -38,6 +38,7 @@ async def get_user_from_token(token: str = Query(...), db=Depends(crud.get_db)):
     if user:
         return user.name
     else:
+        logger.error(f"query {token} failed")
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
 
@@ -53,14 +54,16 @@ async def generate_thumbnail(filename: str):
         img = Image.open(RAW_DATA_PATH.joinpath(filename))
         img.seek(0)
         img = img.convert('RGB')
+        logger.debug(f'processing {filename}: HxV={img.width}x{img.height}')
         if img.width >= 256:
             height = img.height * 256 // img.width
-            img.resize([256, height])
+            img = img.resize([256, height])
+            logger.debug(f'resize to {img.width}x{img.height}')
         tn = pathlib.Path(filename).stem + '.jpg'
         img.save(pathlib.Path(THUMBNAIL_DATA_PATH.joinpath(tn)))
         return tn
     except Exception as e:
-        print(f"{e}")
+        logger.exception('nani?')
         return None
 
 

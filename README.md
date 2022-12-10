@@ -24,6 +24,12 @@ Usage
 
 Environment Variables
 ---------------------
++ MEME_HOST:
+    + Description: listening host
+    + Default: `127.0.0.1`
++ MEME_PORT:
+    + Description: listening port
+    + Default: `8000`
 + MEME_DATA_PATH
     + Description: data storage path
     + Default: `./data`

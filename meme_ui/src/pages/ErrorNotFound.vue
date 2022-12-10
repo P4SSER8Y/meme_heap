@@ -14,7 +14,7 @@
         color="white"
         text-color="blue"
         unelevated
-        to="/gallery"
+        to="/"
         label="Go Home"
         no-caps
       />

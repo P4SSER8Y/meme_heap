@@ -1,7 +1,7 @@
 
 const routes = [
   {
-    path: '/gallery',
+    path: '/',
     component: () => import('pages/Gallery.vue'),
   },
 

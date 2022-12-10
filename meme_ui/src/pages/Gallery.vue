@@ -1,147 +1,180 @@
-<script setup>
-import { useQuasar } from 'quasar';
-import axios from 'axios';
-import { debounce } from 'lodash-es';
-import TokenEdit from './TokenEdit.vue';
-import Preview from './Preview.vue'
-import UploadDialog from './UploadDialog.vue';
+<script setup name="Gallery">
+import { ref, reactive, computed, watch } from "vue";
+import { storeToRefs } from "pinia";
+import { useStore } from "src/stores/store";
+import { api } from "src/boot/axios";
+import LargePreview from "src/components/LargePreview.vue";
+import TokenEdit from "src/components/TokenEdit.vue";
+import UploadDialog from "src/components/UploadDialog.vue";
 
-const $q = useQuasar();
-$q.dark.set(true);
-</script>
+const store = useStore();
 
-<script>
-export default {
-  data() {
-    return {
-      token: '',
-      tags: "",
-      records: () => [],
-      allTags: [],
-      valid: false,
-      isLoading: false,
-      isPreviewing: false,
-      previewUrl: "",
-      previewTags: [],
-      update: () => undefined,
-      isUploading: false,
-    }
-  },
-  mounted() {
-    this.client = axios.create({ timeout: 500, });
-    this.update = debounce(this.doUpdate, 100, { trailing: true, });
-    this.updateCookies = debounce(this.doUpdateCookies, 1000, { trailing: true, });
-    this.token = this.$q.cookies.has('token') ? this.$q.cookies.get('token') : "";
-    this.update();
-  },
-  methods: {
-    doUpdate() {
-      this.isLoading = true;
-      this.client.get('meme/', { params: { token: this.token, tag: this.tags } })
-        .then(res => {
-          this.records = res.data;
-          this.valid = true;
-        })
-        .catch(() => {
-          this.records = [];
-          this.valid = false;
-        })
-        .finally(() => {
-          this.isLoading = false;
-        });
-      this.client.get("tag/", { params: { token: this.token } })
-        .then(res => this.allTags = res.data)
-        .catch(() => this.allTags = []);
-    },
-    doUpdateCookies() {
-      this.$q.cookies.set('token', this.token);
-    },
-    doPreview(item) {
-      this.previewUrl = 'raw/' + item.filename;
-      this.previewTags = item.tags;
-      this.isPreviewing = true;
-    },
-  },
-  watch: {
-    token(newToken) {
-      this.update();
-      this.updateCookies();
-    },
-    tags(newToken) {
-      this.update();
-    },
-  },
-  computed: {
-    tagList() {
-      if (Array.isArray(this.tags)) {
-        return this.tags;
-      }
-      else {
-        return this.tags.split(',').map(x => x.trim()).filter(x => x != '');
-      }
-    },
-    memeCount() {
-      return this.records.length;
-    },
-  },
-  meta() {
-    console.log("wt");
-    return {
-      title: 'Meta Heap' + (this.valid ? (' - ' + this.token) : ''),
-    }
-  },
+const emit = defineEmits(["setTag"]);
+
+const tags = ref([]);
+const query = ref("");
+const records = ref([]);
+const isPreviewing = ref(false);
+const previewItem = reactive({ tags: [], uuid: "", filename: "" });
+const isRightDrawerOpen = ref(false);
+
+const allTags = computed(() => {
+  if (Array.isArray(tags.value)) {
+    return tags.value;
+  } else {
+    return tags.value
+      .split(",")
+      .map((x) => x.trim())
+      .filter((x) => x != "");
+  }
+});
+
+function toggleRightDrawer() {
+  isRightDrawerOpen.value = !isRightDrawerOpen.value;
 }
+
+function toggleUploadDialog() {
+  isUploading.value = !isUploading.value;
+}
+
+function preview(item) {
+  isPreviewing.value = true;
+  previewItem.filename = "raw/" + item.filename;
+  previewItem.tags = item.tags;
+  previewItem.uuid = item.uuid;
+}
+
+async function updateTags() {
+  await api
+    .get("tag/", {
+      params: { token: store.token },
+    })
+    .then((response) => {
+      tags.value = response.data;
+    })
+    .catch(() => {
+      tags.value = [];
+    });
+}
+
+async function updateMemes() {
+  await api
+    .get("meme/", {
+      params: { token: store.token, tag: query.value },
+    })
+    .then((response) => {
+      records.value = response.data;
+    })
+    .catch(() => {
+      records.value = [];
+    });
+}
+
+async function updateAll() {
+  await updateTags();
+  await updateMemes();
+}
+
+function setQuery(value) {
+  query.value = value.tag;
+}
+
+watch(query, async (newQuery) => {
+  await updateMemes();
+});
+
+store.$subscribe(async (mutation, state) => {
+  await updateAll();
+});
+updateAll();
 </script>
 
 <template>
-  <q-layout view="hHh lpR fff">
+  <q-layout view="hHr LpR fFr">
     <q-header elevated>
       <q-toolbar class="bg-info">
-        <token-edit v-model="token" label="token" debounce="200">
-          <template #prepend>
-            <q-icon name="fa-solid fa-lock" />
-          </template>
-        </token-edit>
         <q-toolbar-title>
-          <q-input v-model="tags" label="tags" clearable borderless debounce="200">
+          <q-input
+            v-model="query"
+            label="tags"
+            clearable
+            borderless
+            debounce="200"
+          >
             <template #prepend>
               <q-icon name="fa-solid fa-tags" />
             </template>
           </q-input>
         </q-toolbar-title>
-        <q-btn round flat icon="fa-solid fa-upload" @click="() => isUploading = true" />
+        <q-btn dense flat round icon="fa-solid fa-rotate" @click="updateAll" />
+        <q-btn
+          dense
+          flat
+          round
+          icon="fa-solid fa-bars"
+          @click="toggleRightDrawer"
+        />
       </q-toolbar>
     </q-header>
 
     <q-page-container>
       <q-page padding>
-        <div class="full-width row wrap justify-start items-start content-center">
-          <q-chip v-for="item in allTags" @click="() => this.tags = item.tag" clickable outline>
-            <q-avatar v-if="(item.count > 1)">{{ item.count }}</q-avatar>
+        <div
+          class="full-width row wrap justify-start items-start content-center"
+        >
+          <q-chip
+            v-for="item in allTags"
+            clickable
+            outline
+            @click="setQuery(item)"
+          >
+            <q-avatar v-if="item.count > 1">{{ item.count }}</q-avatar>
             {{ item.tag }}
           </q-chip>
         </div>
-        <div class="full-width row wrap justify-start items-start content-start">
-          <q-img v-for="item in records" :src="('thumbnail/' + item.thumbnail)" @click="doPreview(item)" fit="contain"
-            loading="lazy" width="256px" ratio="1">
-            <template #error>
-              hmmm
-            </template>
-          </q-img>
+        <div class="full-width row wrap justify-between items-center">
+          <q-card v-for="item in records" bordered>
+            <q-card-section horizontal>
+              <img
+                :src="'thumbnail/' + item.thumbnail"
+                style="height: 256px; width: auto; cursor: pointer"
+                @click="preview(item)"
+              />
+            </q-card-section>
+          </q-card>
         </div>
       </q-page>
 
-      <q-page-sticky position="bottom-right" :offset="[18, 18]">
-        <q-btn @click="update" outline flat rounded icon="fa-solid fa-rotate" class="secondary"></q-btn>
-      </q-page-sticky>
+      <q-drawer
+        v-model="isRightDrawerOpen"
+        side="right"
+        overlay
+        behavior="mobile"
+      >
+        <q-card>
+          <q-card-section>
+            <TokenEdit v-model="store.token" label="tags">
+              <template #prepend>
+                <q-icon name="fa-solid fa-tags" />
+              </template>
+            </TokenEdit>
+          </q-card-section>
+        </q-card>
+        <q-separator spaced="lg"/>
+        <UploadDialog :token="store.token" @success="updateAll"/>
+      </q-drawer>
 
-      <preview v-model="isPreviewing" :tags="previewTags" :src="previewUrl"></preview>
-      <UploadDialog v-model="isUploading" :token="token"></UploadDialog>
+      <q-dialog v-model="isPreviewing" full-width full-height>
+        <LargePreview
+          :token="store.token"
+          :tags="previewItem.tags"
+          :filename="previewItem.filename"
+          :uuid="previewItem.uuid"
+          @hide="() => (isPreviewing = false)"
+          @update="updateAll"
+        >
+        </LargePreview>
+      </q-dialog>
     </q-page-container>
-
   </q-layout>
 </template>
-
-<style scoped>
-
-</style>

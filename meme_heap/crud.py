@@ -137,7 +137,7 @@ def get_file_info_by_uuid(db: Session, uuid: str):
     tags = db.query(models.Tag.tag).filter(models.Tag.uuid == uuid).all()
     tags = [x['tag'] for x in tags]
     filename = db.query(models.File).filter(models.File.uuid == uuid).one()
-    return {'tags': tags, 'filename': filename.filename, "thumbnail": filename.thumbnail}
+    return {'uuid': uuid, 'tags': tags, 'filename': filename.filename, "thumbnail": filename.thumbnail}
 
 
 def get_all_files(db: Session, owner: str):

@@ -23,6 +23,7 @@ const isPreviewing = ref(false);
 const previewItem = reactive({ tags: [], uuid: "", filename: "" });
 const isRightDrawerOpen = ref(false);
 const isTokenValid = ref(false);
+const thumbnails = ref(null);
 
 function toggleRightDrawer() {
   isRightDrawerOpen.value = !isRightDrawerOpen.value;
@@ -33,6 +34,14 @@ function preview(item) {
   previewItem.filename = "raw/" + item.filename;
   previewItem.tags = item.tags;
   previewItem.uuid = item.uuid;
+}
+
+function resizeThumbnail(item) {
+  let index = thumbnails.value.findIndex(
+    (x) => x.$el.attributes.uuid.value == item.uuid
+  );
+  let img = thumbnails.value[index].$el.getElementsByTagName("img")[0];
+  item.width = (img.naturalWidth * 256) / img.naturalHeight + "px";
 }
 
 async function checkToken() {
@@ -136,16 +145,22 @@ updateAll();
             {{ item.tag }}
           </q-chip>
         </div>
-        <div class="full-width row wrap justify-around items-center content-center">
-          <q-card v-for="item in records" bordered :key="item.uuid">
-            <q-card-section horizontal>
-              <img
-                :src="'thumbnail/' + item.thumbnail"
-                style="max-height: 256px; width: auto; max-width: 90vw; cursor: pointer"
-                @click="preview(item)"
-              />
-            </q-card-section>
-          </q-card>
+        <div
+          class="full-width row wrap justify-around items-center content-center"
+        >
+          <q-img
+            v-for="item in records"
+            :width="item.width ? item.width : '256px'"
+            :height="item.height ? item.height : '256px'"
+            loading="lazy"
+            :src="'thumbnail/' + item.thumbnail"
+            fit="scale-down"
+            @click="preview(item)"
+            @load="resizeThumbnail(item)"
+            :key="item.uuid"
+            ref="thumbnails"
+            :uuid="item.uuid"
+          />
         </div>
       </q-page>
 

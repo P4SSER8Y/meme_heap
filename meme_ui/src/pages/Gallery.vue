@@ -56,6 +56,7 @@ async function updateTags() {
       .catch(() => {
         tags.value = [];
       });
+    tags.value.sort((a, b) => b.count - a.count);
   } else {
     tags.value = [];
   }

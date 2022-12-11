@@ -9,6 +9,7 @@ import {
   fasBars,
   fasLock,
   fasLockOpen,
+  fasRotate,
 } from "@quasar/extras/fontawesome-v6";
 
 const store = useStore();
@@ -23,23 +24,8 @@ const previewItem = reactive({ tags: [], uuid: "", filename: "" });
 const isRightDrawerOpen = ref(false);
 const isTokenValid = ref(false);
 
-const allTags = computed(() => {
-  if (Array.isArray(tags.value)) {
-    return tags.value;
-  } else {
-    return tags.value
-      .split(",")
-      .map((x) => x.trim())
-      .filter((x) => x != "");
-  }
-});
-
 function toggleRightDrawer() {
   isRightDrawerOpen.value = !isRightDrawerOpen.value;
-}
-
-function toggleUploadDialog() {
-  isUploading.value = !isUploading.value;
 }
 
 function preview(item) {
@@ -129,7 +115,7 @@ updateAll();
             </template>
           </q-input>
         </q-toolbar-title>
-        <q-btn dense flat round icon="fa-solid fa-rotate" @click="updateAll" />
+        <q-btn dense flat round :icon="fasRotate" @click="updateAll" />
         <q-btn dense flat round :icon="fasBars" @click="toggleRightDrawer" />
       </q-toolbar>
     </q-header>
@@ -140,7 +126,7 @@ updateAll();
           class="full-width row wrap justify-start items-start content-center"
         >
           <q-chip
-            v-for="item in allTags"
+            v-for="item in tags"
             clickable
             outline
             @click="setQuery(item)"

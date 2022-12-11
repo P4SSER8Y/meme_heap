@@ -1,6 +1,11 @@
 <script setup name="Preview">
 import { ref } from "vue";
 import { api } from "src/boot/axios";
+import {
+  fasTrashCan,
+  fasImage,
+  fasBiohazard,
+} from "@quasar/extras/fontawesome-v6";
 
 const props = defineProps({
   token: String,
@@ -32,18 +37,14 @@ async function deleteMe() {
 <template>
   <q-card>
     <q-bar>
+      <q-icon :name="fasImage" />
       <div class="full-width row wrap justify-start items-start content-center">
         <q-chip v-for="item in props.tags" outline class="text-caption">
           {{ item }}
         </q-chip>
       </div>
       <q-space />
-      <q-btn
-        dense
-        flat
-        icon="fa-solid fa-trash-can"
-        @click="toggleDeleteConfirm"
-      />
+      <q-btn dense flat :icon="fasTrashCan" @click="toggleDeleteConfirm" />
     </q-bar>
     <q-card-section @click="$emit('hide')">
       <div
@@ -62,17 +63,26 @@ async function deleteMe() {
     <q-dialog v-model="isConfirming">
       <q-card>
         <q-card-section class="text-h6 text-weight-bolder">
-          <q-avatar
-            icon="fa-solid fa-biohazard"
-            text-color="primary"
-            size="xl"
-          />
-          <span class="text-primary text-uppercase text-weight-bolder text-h6">Delete this?</span>
+          <q-avatar :icon="fasBiohazard" text-color="primary" size="xl" />
+          <span class="text-primary text-uppercase text-weight-bolder text-h6"
+            >Delete this?</span
+          >
         </q-card-section>
         <q-separator />
         <q-card-actions align="right">
-          <q-btn outline label="no" class="text-positive text-weight-bold" v-close-popup />
-          <q-btn outline label="YES" class="text-negative text-weight-bold" v-close-popup @click="deleteMe" />
+          <q-btn
+            outline
+            label="no"
+            class="text-positive text-weight-bold"
+            v-close-popup
+          />
+          <q-btn
+            outline
+            label="YES"
+            class="text-negative text-weight-bold"
+            v-close-popup
+            @click="deleteMe"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>

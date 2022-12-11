@@ -158,9 +158,9 @@ async def delete_tag(tag: str = Query(...), uuid: str = Query(...), user=Depends
     return {'uuid': uuid, 'tags': tags}
 
 
-# @app.get('/user/', tags=['user'])
-# async def get_user(user=Depends(get_user_from_token), db=Depends(crud.get_db)):
-#     return {"user": user, 'admin': crud.is_admin(db, user)}
+@app.get('/user/', tags=['user'])
+async def get_user(user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+    return {"user": user, 'admin': crud.is_admin(db, user)}
 
 
 @app.put('/user/', tags=['user'])

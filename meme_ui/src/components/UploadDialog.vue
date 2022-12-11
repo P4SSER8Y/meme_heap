@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import { fasPenToSquare } from '@quasar/extras/fontawesome-v6';
 
 const props = defineProps({
   token: String,
@@ -33,8 +34,8 @@ function fail() {
       <q-uploader
         flat
         accept="image/*"
-        :label="'meme ' + token"
-        bordered
+        label="Upload"
+        color="dark"
         style="width: 100%; height: 100%; max-height: 100%"
         :factory="factory"
         @finish="success"
@@ -43,7 +44,11 @@ function fail() {
       </q-uploader>
     </q-card-section>
     <q-card-section>
-      <q-input v-model="tags" label="tags"> </q-input>
+      <q-input v-model="tags" label="tags" hint="use comma to separate tags">
+        <template #prepend>
+          <q-icon :name="fasPenToSquare" />
+        </template>
+      </q-input>
     </q-card-section>
   </q-card>
 </template>

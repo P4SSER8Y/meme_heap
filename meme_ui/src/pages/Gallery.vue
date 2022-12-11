@@ -136,12 +136,12 @@ updateAll();
             {{ item.tag }}
           </q-chip>
         </div>
-        <div class="full-width row wrap justify-between items-center">
+        <div class="full-width row wrap justify-around items-center content-center">
           <q-card v-for="item in records" bordered :key="item.uuid">
             <q-card-section horizontal>
               <img
                 :src="'thumbnail/' + item.thumbnail"
-                style="height: 256px; width: auto; cursor: pointer"
+                style="max-height: 256px; width: auto; max-width: 90vw; cursor: pointer"
                 @click="preview(item)"
               />
             </q-card-section>

@@ -30,8 +30,8 @@ let thumbnailWidth = new Map();
 let thumbnailHeight = new Map();
 
 onMounted(() => {
-  if ($route.query.t) {
-    store.token = $route.query.t;
+  if ($route.params.t) {
+    store.token = $route.params.t;
   }
 });
 function toggleRightDrawer() {

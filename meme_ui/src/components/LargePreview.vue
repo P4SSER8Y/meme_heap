@@ -35,7 +35,7 @@ async function deleteMe() {
 </script>
 
 <template>
-  <q-card>
+  <q-card class="no-scroll" style="width: 100vw; height: auto;">
     <q-bar>
       <q-icon :name="fasImage" />
       <div class="full-width row wrap justify-start items-start content-center">
@@ -50,15 +50,8 @@ async function deleteMe() {
       <div
         class="full-width column wrap justify-start items-start content-center"
       >
-        <q-space />
-        <div class="full-width row justify-around items-center content-around">
-          <img :src="props.filename" />
-        </div>
-        <q-space />
+        <q-img :src="props.filename" loading="lazy" />
       </div>
-      <!-- <div class="full-height flex flex-center">
-          <q-img :src="props.filename" loading="lazy" fit="scale-down"> </q-img>
-        </div> -->
     </q-card-section>
     <q-dialog v-model="isConfirming">
       <q-card>

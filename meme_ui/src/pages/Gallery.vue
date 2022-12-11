@@ -176,7 +176,7 @@ updateAll();
         <UploadDialog :token="store.token" @success="updateAll" />
       </q-drawer>
 
-      <q-dialog v-model="isPreviewing" full-width full-height>
+      <q-dialog v-model="isPreviewing">
         <LargePreview
           :token="store.token"
           :tags="previewItem.tags"

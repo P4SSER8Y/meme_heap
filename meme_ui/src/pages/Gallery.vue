@@ -71,6 +71,14 @@ async function updateTags() {
   }
 }
 
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 async function updateMemes() {
   if (isTokenValid.value) {
     await api
@@ -78,7 +86,7 @@ async function updateMemes() {
         params: { token: store.token, tag: query.value },
       })
       .then((response) => {
-        records.value = response.data;
+        records.value = shuffleArray(response.data);
       })
       .catch(() => {
         records.value = [];

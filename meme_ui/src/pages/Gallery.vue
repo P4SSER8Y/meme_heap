@@ -11,8 +11,9 @@ import {
   fasLockOpen,
   fasRotate,
 } from "@quasar/extras/fontawesome-v6";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
+const $router = useRouter();
 const $route = useRoute();
 const store = useStore();
 
@@ -141,12 +142,16 @@ function setQuery(value) {
   query.value = value.tag;
 }
 
+function submitToken(event) {
+  $router.push({ path: "/" + store.token });
+}
+
 watch(query, async (newQuery) => {
   await updateMemes();
 });
 
 store.$subscribe(async (mutation, state) => {
-  await updateAll();
+  await checkToken();
 });
 updateAll();
 </script>
@@ -215,20 +220,22 @@ updateAll();
       >
         <q-card>
           <q-card-section>
-            <q-input
-              v-model="store.token"
-              label="token"
-              :error="!isTokenValid"
-              debounce="200"
-              clearable
-            >
-              <template #prepend>
-                <q-icon
-                  :name="isTokenValid ? fasLockOpen : fasLock"
-                  :color="isTokenValid ? '' : 'negative'"
-                />
-              </template>
-            </q-input>
+            <q-form @submit="submitToken">
+              <q-input
+                label="token"
+                v-model="store.token"
+                :error="!isTokenValid"
+                debounce="200"
+                clearable
+              >
+                <template #prepend>
+                  <q-icon
+                    :name="isTokenValid ? fasLockOpen : fasLock"
+                    :color="isTokenValid ? '' : 'negative'"
+                  />
+                </template>
+              </q-input>
+            </q-form>
           </q-card-section>
         </q-card>
         <q-separator spaced="lg" />

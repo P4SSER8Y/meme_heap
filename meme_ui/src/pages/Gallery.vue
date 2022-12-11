@@ -1,5 +1,5 @@
 <script setup name="Gallery">
-import { ref, reactive, computed, watch, onMounted } from "vue";
+import { ref, reactive, computed, watch } from "vue";
 import { useStore } from "src/stores/store";
 import { api } from "src/boot/axios";
 import LargePreview from "src/components/LargePreview.vue";
@@ -30,11 +30,13 @@ const thumbnails = ref(null);
 let thumbnailWidth = new Map();
 let thumbnailHeight = new Map();
 
-onMounted(() => {
+$router.afterEach(async () => {
   if ($route.params.t) {
     store.token = $route.params.t;
   }
+  await updateAll();
 });
+
 function toggleRightDrawer() {
   isRightDrawerOpen.value = !isRightDrawerOpen.value;
 }
@@ -153,7 +155,6 @@ watch(query, async (newQuery) => {
 store.$subscribe(async (mutation, state) => {
   await checkToken();
 });
-updateAll();
 </script>
 
 <template>

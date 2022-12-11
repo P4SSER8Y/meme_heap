@@ -1,5 +1,5 @@
 <script setup name="Preview">
-import { ref } from "vue";
+import { ref, reactive } from "vue";
 import { api } from "src/boot/axios";
 import {
   fasTrashCan,
@@ -17,9 +17,26 @@ const props = defineProps({
 const emit = defineEmits(["hide", "update"]);
 
 const isConfirming = ref(false);
+const img = ref(null);
+const naturalInfo = reactive({
+  valid: false,
+  width: 0,
+  height: 0,
+});
 
 function toggleDeleteConfirm() {
   isConfirming.value = !isConfirming.value;
+}
+
+function updateSize(src) {
+  try {
+    let element = img.value.$el.getElementsByTagName("img")[0];
+    naturalInfo.width = element.naturalWidth;
+    naturalInfo.height = element.naturalHeight;
+    naturalInfo.valid = true;
+  } catch (e) {
+    naturalInfo.valid = false;
+  }
 }
 
 async function deleteMe() {
@@ -35,14 +52,10 @@ async function deleteMe() {
 </script>
 
 <template>
-  <q-card class="no-scroll" style="width: 100vw; height: auto;">
+  <q-card class="no-scroll" style="width: 100vw; height: auto">
     <q-bar>
       <q-icon :name="fasImage" />
-      <div class="full-width row wrap justify-start items-start content-center">
-        <q-chip v-for="item in props.tags" outline class="text-caption">
-          {{ item }}
-        </q-chip>
-      </div>
+      <div v-show="naturalInfo.valid">{{ naturalInfo.width }} x {{ naturalInfo.height }}</div>
       <q-space />
       <q-btn dense flat :icon="fasTrashCan" @click="toggleDeleteConfirm" />
     </q-bar>
@@ -50,7 +63,21 @@ async function deleteMe() {
       <div
         class="full-width column wrap justify-start items-start content-center"
       >
-        <q-img :src="props.filename" loading="lazy" />
+        <q-img
+          :src="props.filename"
+          loading="lazy"
+          fit="scale-down"
+          draggable
+          @load="updateSize"
+          ref="img"
+        />
+      </div>
+    </q-card-section>
+    <q-card-section>
+      <div class="full-width row wrap justify-start items-start content-center">
+        <q-chip v-for="item in props.tags" outline class="text-caption">
+          {{ item }}
+        </q-chip>
       </div>
     </q-card-section>
     <q-dialog v-model="isConfirming">

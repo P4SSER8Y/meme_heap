@@ -213,6 +213,7 @@ updateAll();
               label="token"
               :error="!isTokenValid"
               debounce="200"
+              clearable
             >
               <template #prepend>
                 <q-icon

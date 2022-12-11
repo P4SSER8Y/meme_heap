@@ -1,5 +1,5 @@
 <script setup name="Gallery">
-import { ref, reactive, computed, watch } from "vue";
+import { ref, reactive, computed, watch, onMounted } from "vue";
 import { useStore } from "src/stores/store";
 import { api } from "src/boot/axios";
 import LargePreview from "src/components/LargePreview.vue";
@@ -11,7 +11,9 @@ import {
   fasLockOpen,
   fasRotate,
 } from "@quasar/extras/fontawesome-v6";
+import { useRoute } from "vue-router";
 
+const $route = useRoute();
 const store = useStore();
 
 const emit = defineEmits(["setTag"]);
@@ -27,6 +29,11 @@ const thumbnails = ref(null);
 let thumbnailWidth = new Map();
 let thumbnailHeight = new Map();
 
+onMounted(() => {
+  if ($route.query.t) {
+    store.token = $route.query.t;
+  }
+});
 function toggleRightDrawer() {
   isRightDrawerOpen.value = !isRightDrawerOpen.value;
 }

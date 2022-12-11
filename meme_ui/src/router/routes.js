@@ -3,6 +3,9 @@ const routes = [
   {
     path: '/',
     component: () => import('pages/Gallery.vue'),
+    props: route => {
+      t: route.query.token ? route.query.token : ""
+    }
   },
 
   // Always leave this as last one,

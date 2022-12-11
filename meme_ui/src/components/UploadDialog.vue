@@ -9,6 +9,7 @@ const props = defineProps({
 const emit = defineEmits(["success", "fail"]);
 
 const tags = ref("");
+const uploader = ref(null);;
 
 function factory(files) {
   return {
@@ -21,6 +22,7 @@ function factory(files) {
 
 function success() {
   emit("success");
+  setTimeout(() => {uploader.value.reset();}, 250);
 }
 
 function fail() {
@@ -37,7 +39,9 @@ function fail() {
         label="Upload"
         color="dark"
         style="width: 100%; height: 100%; max-height: 100%"
+        max-files="1"
         :factory="factory"
+        ref="uploader"
         @finish="success"
         @failed="fail"
       >

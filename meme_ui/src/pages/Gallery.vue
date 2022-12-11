@@ -24,6 +24,8 @@ const previewItem = reactive({ tags: [], uuid: "", filename: "" });
 const isRightDrawerOpen = ref(false);
 const isTokenValid = ref(false);
 const thumbnails = ref(null);
+let thumbnailWidth = new Map();
+let thumbnailHeight = new Map();
 
 function toggleRightDrawer() {
   isRightDrawerOpen.value = !isRightDrawerOpen.value;
@@ -36,12 +38,38 @@ function preview(item) {
   previewItem.uuid = item.uuid;
 }
 
+function getThumbnailWidth(uuid) {
+  if (!thumbnailWidth.has(uuid)) {
+    thumbnailWidth.set(uuid, ref("256px"));
+  }
+  return thumbnailWidth.get(uuid);
+}
+
+function getThumbnailHeight(uuid) {
+  if (!thumbnailHeight.has(uuid)) {
+    thumbnailHeight.set(uuid, ref("256px"));
+  }
+  return thumbnailHeight.get(uuid);
+}
+
+const computedThumbnailWidth = computed(
+  () => (uuid) => getThumbnailWidth(uuid).value
+);
+
+const computedThumbnailHeight = computed(
+  () => (uuid) => getThumbnailHeight(uuid).value
+);
+
 function resizeThumbnail(item) {
   let index = thumbnails.value.findIndex(
     (x) => x.$el.attributes.uuid.value == item.uuid
   );
   let img = thumbnails.value[index].$el.getElementsByTagName("img")[0];
-  item.width = (img.naturalWidth * 256) / img.naturalHeight + "px";
+  let width = (img.naturalWidth * 256) / img.naturalHeight;
+  let height = 256;
+
+  getThumbnailWidth(item.uuid).value = width + "px";
+  getThumbnailHeight(item.uuid).value = height + "px";
 }
 
 async function checkToken() {
@@ -158,8 +186,8 @@ updateAll();
         >
           <q-img
             v-for="item in records"
-            :width="item.width ? item.width : '256px'"
-            :height="item.height ? item.height : '256px'"
+            :width="computedThumbnailWidth(item.uuid)"
+            :height="computedThumbnailHeight(item.uuid)"
             loading="lazy"
             :src="'thumbnail/' + item.thumbnail"
             fit="scale-down"

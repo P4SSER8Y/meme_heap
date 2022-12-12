@@ -77,7 +77,8 @@ async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fasta
     size = 0
     ts = datetime.now()
     filename = f"{uuid}{ext}".lower()
-    os.makedirs(pathlib.Path(DATA_PATH, user), exist_ok=True)
+    os.makedirs(pathlib.Path(RAW_DATA_PATH, user), exist_ok=True)
+    os.makedirs(pathlib.Path(THUMBNAIL_DATA_PATH, user), exist_ok=True)
     async with aiofiles.open(pathlib.Path(RAW_DATA_PATH, user, filename), 'wb') as f:
         while True:
             raw = await file.read(32 * 1024 * 1024)

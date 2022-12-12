@@ -1,5 +1,5 @@
 <script setup name="Gallery">
-import { ref, reactive, computed, watch } from "vue";
+import { ref, reactive, computed, watch, onMounted } from "vue";
 import { useStore } from "src/stores/store";
 import { api } from "src/boot/axios";
 import LargePreview from "src/components/LargePreview.vue";
@@ -37,13 +37,17 @@ $router.afterEach(async () => {
   await updateAll();
 });
 
+onMounted(async () => {
+  await updateAll();
+});
+
 function toggleRightDrawer() {
   isRightDrawerOpen.value = !isRightDrawerOpen.value;
 }
 
 function preview(item) {
   isPreviewing.value = true;
-  previewItem.filename = "raw/" + item.filename;
+  previewItem.filename = item.filename;
   previewItem.tags = item.tags;
   previewItem.uuid = item.uuid;
 }
@@ -202,7 +206,7 @@ store.$subscribe(async (mutation, state) => {
             :width="computedThumbnailWidth(item.uuid)"
             :height="computedThumbnailHeight(item.uuid)"
             loading="lazy"
-            :src="'thumbnail/' + item.thumbnail"
+            :src="item.thumbnail"
             fit="scale-down"
             @click="preview(item)"
             @load="resizeThumbnail(item)"

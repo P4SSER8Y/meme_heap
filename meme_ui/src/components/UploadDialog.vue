@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from "vue";
-import { fasPenToSquare } from '@quasar/extras/fontawesome-v6';
+import { fasPenToSquare } from "@quasar/extras/fontawesome-v6";
 
 const props = defineProps({
   token: String,
@@ -9,7 +9,7 @@ const props = defineProps({
 const emit = defineEmits(["success", "fail"]);
 
 const tags = ref("");
-const uploader = ref(null);;
+const uploader = ref(null);
 
 function factory(files) {
   return {
@@ -22,7 +22,10 @@ function factory(files) {
 
 function success() {
   emit("success");
-  setTimeout(() => {uploader.value.reset();}, 250);
+  setTimeout(() => {
+    uploader.value.reset();
+    tags.value = "";
+  }, 250);
 }
 
 function fail() {

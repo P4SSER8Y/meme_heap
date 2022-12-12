@@ -9,7 +9,6 @@ import os
 import yaml
 import pathlib
 import aiofiles
-import logging
 from . import crud
 from PIL import Image
 from loguru import logger
@@ -26,10 +25,13 @@ THUMBNAIL_DATA_PATH = DATA_PATH.joinpath('thumbnail')
 os.makedirs(THUMBNAIL_DATA_PATH, exist_ok=True)
 UI_PATH = pathlib.Path(os.environ.get("UI_PATH", pathlib.Path(__file__).parent.joinpath('../meme_ui/dist')))
 
+URL_BASE_RAW = pathlib.Path(os.environ.get("MEME_URL_BASE_RAW", 'r'))
+URL_BASE_THUMBNAIL = pathlib.Path(os.environ.get("MEME_URL_BASE_THUMBNAIL", 't'))
+
 
 def statics_handler(app: fastapi.FastAPI, prefix: str):
-    app.mount(f"{prefix}/raw", StaticFiles(directory=RAW_DATA_PATH))
-    app.mount(f"{prefix}/thumbnail", StaticFiles(directory=THUMBNAIL_DATA_PATH))
+    app.mount(f"{prefix}/{URL_BASE_RAW}", StaticFiles(directory=RAW_DATA_PATH))
+    app.mount(f"{prefix}/{URL_BASE_THUMBNAIL}", StaticFiles(directory=THUMBNAIL_DATA_PATH))
     app.mount(f"{prefix}", StaticFiles(directory=UI_PATH, html=True, check_dir=False))
 
 
@@ -48,10 +50,10 @@ def get_tags(tag: Optional[str]):
     return [x.strip() for x in re.split(r'[,，]', tag) if len(x) > 0]
 
 
-async def generate_thumbnail(filename: str):
+async def generate_thumbnail(user: str, filename: str):
     suffix = pathlib.Path(filename).suffix.lower()
     try:
-        img = Image.open(RAW_DATA_PATH.joinpath(filename))
+        img = Image.open(pathlib.Path(RAW_DATA_PATH, user, filename))
         img.seek(0)
         img = img.convert('RGB')
         logger.debug(f'processing {filename}: HxV={img.width}x{img.height}')
@@ -60,7 +62,7 @@ async def generate_thumbnail(filename: str):
             img = img.resize([width, 256])
             logger.debug(f'resize to {img.width}x{img.height}')
         tn = pathlib.Path(filename).stem + '.jpg'
-        img.save(pathlib.Path(THUMBNAIL_DATA_PATH.joinpath(tn)))
+        img.save(pathlib.Path(THUMBNAIL_DATA_PATH, user, tn))
         return tn
     except Exception as e:
         logger.exception('nani?')
@@ -75,18 +77,25 @@ async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fasta
     size = 0
     ts = datetime.now()
     filename = f"{uuid}{ext}".lower()
-    os.makedirs(pathlib.Path(DATA_PATH), exist_ok=True)
-    async with aiofiles.open(pathlib.Path(RAW_DATA_PATH, filename), 'wb') as f:
+    os.makedirs(pathlib.Path(DATA_PATH, user), exist_ok=True)
+    async with aiofiles.open(pathlib.Path(RAW_DATA_PATH, user, filename), 'wb') as f:
         while True:
             raw = await file.read(32 * 1024 * 1024)
             if len(raw) == 0:
                 break
             size += len(raw)
             await f.write(raw)
-    thumbnail = await generate_thumbnail(filename)
-    data = {"uuid": uuid, "tags": tags, "size": size, "timestamp": ts,
-            "content-type": file.content_type, "filename": filename, "owner": user, "thumbnail": thumbnail}
-    with open(pathlib.Path(META_DATA_PATH, f"{uuid}.yml"), 'w') as f:
+    thumbnail = await generate_thumbnail(user, filename)
+    data = {"uuid": uuid,
+            "tags": tags,
+            "size": size,
+            "timestamp": ts,
+            "content-type": file.content_type,
+            "filename": filename,
+            "owner": user,
+            "thumbnail": thumbnail,
+            }
+    with open(pathlib.Path(META_DATA_PATH, user, f"{uuid}.yml"), 'w') as f:
         yaml.dump(data, f)
     crud.file_add(db, uuid, filename, user, thumbnail)
     for tag in tags:
@@ -102,13 +111,16 @@ async def query(tag: str = Query(None), user=Depends(get_user_from_token), db=De
         t = crud.get_files_by_tag(db, tags[i], user)
         result = [x for x in result if x in t]
     result = [crud.get_file_info_by_uuid(db, x[0]) for x in result]
+    for item in result:
+        item['filename'] = pathlib.Path(URL_BASE_RAW, user, item['filename'])
+        item['thumbnail'] = pathlib.Path(URL_BASE_THUMBNAIL, user, item['thumbnail'])
     return result
 
 
 @app.delete('/meme/', tags=['meme'])
 async def delete(uuid: str = Query(...), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
     try:
-        meta_path = META_DATA_PATH.joinpath(f'{uuid}.yml')
+        meta_path = pathlib.Path(META_DATA_PATH, user, f'{uuid}.yml')
         with open(meta_path, 'r') as f:
             data = yaml.load(f, Loader=yaml.SafeLoader)
         if data.get('owner', None) != user:
@@ -118,12 +130,12 @@ async def delete(uuid: str = Query(...), user=Depends(get_user_from_token), db=D
         filename = data.get('filename', None)
         if filename is None:
             raise Exception("path is empty")
-        file_path = RAW_DATA_PATH.joinpath(filename)
+        file_path = pathlib.Path(RAW_DATA_PATH, user, filename)
         os.remove(file_path)
 
         thumbnail = data.get('thumbnail', None)
         if thumbnail:
-            thumbnail_path = THUMBNAIL_DATA_PATH.joinpath(thumbnail)
+            thumbnail_path = pathlib.Path(THUMBNAIL_DATA_PATH, user, thumbnail)
             os.remove(thumbnail_path)
     except Exception as e:
         print(f"{e}")

@@ -45,6 +45,12 @@ Environment Variables
 + MEME_TOKEN_SALT:
     + Description: salt of token
     + Default: `memeMEME1v131v13`
++ MEME_URL_BASE_RAW:
+    + Description: prefix for raw files
+    + Default: `r`
++ MEME_URL_BASE_THUMBNAIL:
+    + Description: prefix for thumbnails
+    + Default: `t`
 + UI_PATH:
     + Description: frontend UI files path
     + Default: `./meme_ui/dist`

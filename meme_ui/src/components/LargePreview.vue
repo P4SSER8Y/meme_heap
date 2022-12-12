@@ -6,6 +6,9 @@ import {
   fasImage,
   fasBiohazard,
 } from "@quasar/extras/fontawesome-v6";
+import { useQuasar } from "quasar";
+
+const $q = useQuasar();
 
 const props = defineProps({
   token: String,
@@ -40,11 +43,19 @@ function updateSize(src) {
 }
 
 async function deleteMe() {
-  await api.delete("meme/", {
-    params: {
-      uuid: props.uuid,
-      token: props.token,
-    },
+  let res = (
+    await api.delete("meme/", {
+      params: {
+        uuid: props.uuid,
+        token: props.token,
+      },
+    })
+  ).data;
+  $q.notify({
+    progress: true,
+    timeout: 3000,
+    message: "Deleted: " + res.uuid,
+    color: "negative",
   });
   emit("hide");
   emit("update");
@@ -55,7 +66,9 @@ async function deleteMe() {
   <q-card class="no-scroll" style="width: 100vw; height: auto">
     <q-bar>
       <q-icon :name="fasImage" />
-      <div v-show="naturalInfo.valid">{{ naturalInfo.width }} x {{ naturalInfo.height }}</div>
+      <div v-show="naturalInfo.valid">
+        {{ naturalInfo.width }} x {{ naturalInfo.height }}
+      </div>
       <q-space />
       <q-btn dense flat :icon="fasTrashCan" @click="toggleDeleteConfirm" />
     </q-bar>

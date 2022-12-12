@@ -1,6 +1,9 @@
 <script setup>
 import { ref } from "vue";
 import { fasPenToSquare } from "@quasar/extras/fontawesome-v6";
+import { useQuasar } from "quasar";
+
+const $q = useQuasar();
 
 const props = defineProps({
   token: String,
@@ -20,8 +23,16 @@ function factory(files) {
   };
 }
 
-function success() {
+function success(info) {
   emit("success");
+  let res = JSON.parse(info.xhr.response);
+  $q.notify({
+    progress: true,
+    timeout: 3000,
+    message: "Uploaded: " + res.uuid,
+    caption: 'tags: ' + res.tags.join(', '),
+    color: 'positive',
+  });
   setTimeout(() => {
     uploader.value.reset();
     tags.value = "";
@@ -45,7 +56,7 @@ function fail() {
         max-files="1"
         :factory="factory"
         ref="uploader"
-        @finish="success"
+        @uploaded="success"
         @failed="fail"
       >
       </q-uploader>

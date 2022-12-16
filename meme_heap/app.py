@@ -28,6 +28,12 @@ UI_PATH = pathlib.Path(os.environ.get("UI_PATH", pathlib.Path(__file__).parent.j
 URL_BASE_RAW = pathlib.Path(os.environ.get("MEME_URL_BASE_RAW", 'r'))
 URL_BASE_THUMBNAIL = pathlib.Path(os.environ.get("MEME_URL_BASE_THUMBNAIL", 't'))
 
+logger.info("data path={}", DATA_PATH)
+logger.info("raw data path={}", RAW_DATA_PATH)
+logger.info("meta data path={}", META_DATA_PATH)
+logger.info("thumbnail data path={}", THUMBNAIL_DATA_PATH)
+logger.info("ui path={}", UI_PATH)
+
 
 def statics_handler(app: fastapi.FastAPI, prefix: str):
     app.mount(f"{prefix}/{URL_BASE_RAW}", StaticFiles(directory=RAW_DATA_PATH))
@@ -115,7 +121,8 @@ async def query(tag: str = Query(None), user=Depends(get_user_from_token), db=De
     result = [crud.get_file_info_by_uuid(db, x[0]) for x in result]
     for item in result:
         item['filename'] = pathlib.Path(URL_BASE_RAW, user, item['filename'])
-        item['thumbnail'] = pathlib.Path(URL_BASE_THUMBNAIL, user, item['thumbnail'])
+        if item['thumbnail']:
+            item['thumbnail'] = pathlib.Path(URL_BASE_THUMBNAIL, user, item['thumbnail'])
     return result
 
 

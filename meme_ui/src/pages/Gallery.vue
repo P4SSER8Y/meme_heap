@@ -10,6 +10,7 @@ import {
   fasLock,
   fasLockOpen,
   fasRotate,
+  fasQuestion,
 } from "@quasar/extras/fontawesome-v6";
 import { useRoute, useRouter } from "vue-router";
 
@@ -157,7 +158,7 @@ watch(query, async (newQuery) => {
 });
 
 store.$subscribe(async (mutation, state) => {
-  await checkToken();
+  await updateAll();
 });
 </script>
 
@@ -165,6 +166,8 @@ store.$subscribe(async (mutation, state) => {
   <q-layout view="hHr LpR fFr">
     <q-header elevated>
       <q-toolbar class="bg-info">
+        <q-avatar v-if="isTokenValid">{{ records.length }}</q-avatar>
+        <q-avatar v-else :icon="fasQuestion"></q-avatar>
         <q-toolbar-title>
           <q-input
             v-model="query"
@@ -188,15 +191,17 @@ store.$subscribe(async (mutation, state) => {
         <div
           class="full-width row wrap justify-start items-start content-center"
         >
-          <q-chip
-            v-for="item in tags"
-            clickable
-            outline
-            @click="setQuery(item)"
-          >
-            <q-avatar v-if="item.count > 1">{{ item.count }}</q-avatar>
-            {{ item.tag }}
-          </q-chip>
+          <span v-for="item in tags">
+            <q-chip
+              v-if="item.count > 1"
+              clickable
+              outline
+              @click="setQuery(item)"
+            >
+              <q-avatar>{{ item.count }}</q-avatar>
+              {{ item.tag }}
+            </q-chip>
+          </span>
         </div>
         <div
           class="full-width row wrap justify-around items-center content-center"

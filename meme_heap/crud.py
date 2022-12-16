@@ -20,6 +20,7 @@ TOKEN_SALT = os.environ.get('MEME_TOKEN_SALT', 'memeMEME1v131v13')
 
 engine = create_engine(DB_URL, connect_args={'check_same_thread': False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
+tokenToUserMap = {}
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -49,6 +50,7 @@ def get_token_hash(raw: str):
 def create_user(db: Session, name: str, pwd: str, admin: bool = False):
     user = models.User(name=name, admin=admin, password=get_password_hash(pwd))
     db.add(user)
+    update_token_to_user_map(db)
     return {"name": name, "admin": admin}
 
 
@@ -59,6 +61,7 @@ def delete_user(db: Session, name: str):
     db.query(models.File).filter(models.File.owner == name).delete()
     db.query(models.Token).filter(models.Token.name == name).delete()
     db.query(models.User).filter(models.User.name == name).delete()
+    update_token_to_user_map(db)
     return {'name': name}
 
 
@@ -79,19 +82,29 @@ def token_add(db: Session, name: str, token: Optional[str] = None):
     sha = get_token_hash(token)
     query = models.Token(name=name, token=sha)
     db.add(query)
+    update_token_to_user_map(db)
     return {"name": name, "token": token}
 
 
 def token_delete(db: Session, token: str):
     db.query(models.Token).filter(models.Token.token == get_token_hash(token)).delete()
+    update_token_to_user_map(db)
 
 
 def token_get_all(db: Session, name: str):
     return db.query(models.Token).filter(models.Token.name == name).count()
 
 
-def get_user_from_token(db: Session, token: str):
-    return db.query(models.Token).filter(models.Token.token == get_token_hash(token)).first()
+def update_token_to_user_map(db: Session):
+    global tokenToUserMap
+    query = db.query(models.Token).all()
+    tokenToUserMap.clear()
+    for item in query:
+        tokenToUserMap[item.token] = item.name
+
+
+def get_user_from_token(token: str):
+    return tokenToUserMap.get(get_token_hash(token), None)
 
 
 def is_user(db: Session, name: str):
@@ -155,6 +168,7 @@ async def startup():
             create_user(session, DEFAULT_ADMIN_USER, DEFAULT_ADMIN_PASSWORD, True)
             token_add(session, DEFAULT_ADMIN_USER, DEFAULT_ADMIN_TOKEN)
             session.commit()
+        update_token_to_user_map(session)
     except Exception as e:
         logger.exception('nani?')
     finally:

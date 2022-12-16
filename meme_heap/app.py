@@ -41,12 +41,11 @@ def statics_handler(app: fastapi.FastAPI, prefix: str):
     app.mount(f"{prefix}", StaticFiles(directory=UI_PATH, html=True, check_dir=False))
 
 
-async def get_user_from_token(token: str = Query(...), db=Depends(crud.get_db)):
-    user = crud.get_user_from_token(db, token)
+def get_user_from_token(token: str = Query(...)):
+    user = crud.get_user_from_token(token)
     if user:
-        return user.name
+        return user
     else:
-        logger.error(f"query {token} failed")
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
 

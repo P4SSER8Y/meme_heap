@@ -206,19 +206,21 @@ store.$subscribe(async (mutation, state) => {
         <div
           class="full-width row wrap justify-around items-center content-center"
         >
-          <q-img
-            v-for="item in records"
-            :width="computedThumbnailWidth(item.uuid)"
-            :height="computedThumbnailHeight(item.uuid)"
-            loading="lazy"
-            :src="item.thumbnail"
-            fit="scale-down"
-            @click="preview(item)"
-            @load="resizeThumbnail(item)"
-            :key="item.uuid"
-            ref="thumbnails"
-            :uuid="item.uuid"
-          />
+          <transition-group appear enter-active-class="animated fadeInUpBig" leave-active-class="animated fadeOutDownBig">
+            <q-img
+              v-for="item in records"
+              :width="computedThumbnailWidth(item.uuid)"
+              :height="computedThumbnailHeight(item.uuid)"
+              loading="lazy"
+              :src="item.thumbnail"
+              fit="scale-down"
+              @click="preview(item)"
+              @load="resizeThumbnail(item)"
+              :key="item.uuid"
+              ref="thumbnails"
+              :uuid="item.uuid"
+            />
+          </transition-group>
         </div>
       </q-page>
 

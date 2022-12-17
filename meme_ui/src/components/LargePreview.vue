@@ -5,6 +5,7 @@ import {
   fasTrashCan,
   fasImage,
   fasBiohazard,
+  fasPlus,
 } from "@quasar/extras/fontawesome-v6";
 import { useQuasar } from "quasar";
 
@@ -17,7 +18,7 @@ const props = defineProps({
   uuid: String,
 });
 
-const emit = defineEmits(["hide", "update"]);
+const emit = defineEmits(["hide", "update", "removeTag", "addTag"]);
 
 const isConfirming = ref(false);
 const img = ref(null);
@@ -26,6 +27,7 @@ const naturalInfo = reactive({
   width: 0,
   height: 0,
 });
+const addingTag = ref("");
 
 function toggleDeleteConfirm() {
   isConfirming.value = !isConfirming.value;
@@ -60,6 +62,46 @@ async function deleteMe() {
   emit("hide");
   emit("update");
 }
+
+async function addTag(value, initValue) {
+  console.log(value);
+  let res = (
+    await api.put("tag/", {
+      tag: value,
+      uuid: props.uuid,
+      token: props.token,
+    })
+  ).data;
+  $q.notify({
+    progress: true,
+    timeout: 1000,
+    message: "Added tag: " + value,
+  });
+  emit("addTag", { tag: value, uuid: props.uuid });
+  addingTag.value = "";
+}
+
+function cleanAddingTag() {
+  addingTag.value = "";
+}
+
+async function deleteTag(tag) {
+  let res = (
+    await api.delete("tag/", {
+      params: {
+        tag: tag,
+        uuid: props.uuid,
+        token: props.token,
+      },
+    })
+  ).data;
+  $q.notify({
+    progress: true,
+    timeout: 1000,
+    message: "Deleted tag: " + tag,
+  });
+  emit("removeTag", { tag: tag, uuid: props.uuid });
+}
 </script>
 
 <template>
@@ -87,9 +129,38 @@ async function deleteMe() {
       </div>
     </q-card-section>
     <q-card-section>
-      <div class="full-width row wrap justify-start items-start content-center">
-        <q-chip v-for="item in props.tags" outline class="text-caption">
+      <div
+        class="full-width row wrap justify-start items-start content-center text-caption"
+      >
+        <q-chip
+          v-for="item in props.tags"
+          outline
+          clickable
+          @click="deleteTag(item)"
+        >
           {{ item }}
+          <q-tooltip>remote</q-tooltip>
+        </q-chip>
+
+        <q-chip outline clickable>
+          <q-icon :name="fasPlus"></q-icon>
+          {{ addingTag }}
+          <q-tooltip>add</q-tooltip>
+          <q-popup-edit
+            v-model="addingTag"
+            v-slot="scope"
+            persistent
+            @save="addTag"
+            @before-hide="cleanAddingTag"
+          >
+            <q-input
+              v-model="scope.value"
+              dense
+              autofocus
+              @keyup.enter.prevent="scope.set"
+              @keyup.escape.prevent="scope.cancel"
+            />
+          </q-popup-edit>
         </q-chip>
       </div>
     </q-card-section>

@@ -169,6 +169,50 @@ watch(query, async (newQuery) => {
 store.$subscribe(async (mutation, state) => {
   await updateAll();
 });
+
+function removeTag(arg) {
+  let index = records.value.findIndex((x) => x.uuid == arg.uuid);
+  if (index < 0) {
+    return;
+  }
+  records.value[index].tags = records.value[index].tags.filter(
+    (x) => x != arg.tag
+  );
+  if (isPreviewing) {
+    preview(records.value[index]);
+  }
+
+  index = tags.value.findIndex((x) => x.tag == arg.tag);
+  if (index < 0) {
+    return;
+  }
+  tags.value[index].count--;
+  tags.value.sort((a, b) => b.count - a.count);
+  while (tags.value.at(tags.value.length - 1).count <= 0) {
+    tags.value.pop();
+  }
+}
+
+function addTag(arg) {
+  let index = records.value.findIndex((x) => x.uuid == arg.uuid);
+  if (index < 0) {
+    return;
+  }
+  records.value[index].tags.push(arg.tag);
+  if (isPreviewing) {
+    preview(records.value[index]);
+  }
+
+  console.log(tags);
+  index = tags.value.findIndex((x) => x.tag == arg.tag);
+  console.log(index);
+  if (index >= 0) {
+    tags.value[index].count++;
+  } else {
+    tags.value.push({ tag: arg.tag, count: 1 });
+  }
+  tags.value.sort((a, b) => b.count - a.count);
+}
 </script>
 
 <template>
@@ -196,9 +240,13 @@ store.$subscribe(async (mutation, state) => {
           round
           :icon="fasRotate"
           @click="updateAll"
-          :class="{ 'rotating': updateStackCount > 0 }"
-        />
-        <q-btn dense flat round :icon="fasBars" @click="toggleRightDrawer" />
+          :class="{ rotating: updateStackCount > 0 }"
+        >
+          <q-tooltip> sync </q-tooltip>
+        </q-btn>
+        <q-btn dense flat round :icon="fasBars" @click="toggleRightDrawer">
+          <q-tooltip> more </q-tooltip>
+        </q-btn>
       </q-toolbar>
     </q-header>
 
@@ -282,6 +330,8 @@ store.$subscribe(async (mutation, state) => {
           :uuid="previewItem.uuid"
           @hide="() => (isPreviewing = false)"
           @update="updateAll"
+          @removeTag="removeTag"
+          @addTag="addTag"
         >
         </LargePreview>
       </q-dialog>

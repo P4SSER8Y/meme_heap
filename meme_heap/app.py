@@ -41,7 +41,15 @@ def statics_handler(app: fastapi.FastAPI, prefix: str):
     app.mount(f"{prefix}", StaticFiles(directory=UI_PATH, html=True, check_dir=False))
 
 
-def get_user_from_token(token: str = Query(...)):
+def get_user_from_query_token(token: str = Query(...)):
+    user = crud.get_user_from_token(token)
+    if user:
+        return user
+    else:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+
+def get_user_from_param_token(token: str = Body(...)):
     user = crud.get_user_from_token(token)
     if user:
         return user
@@ -75,7 +83,7 @@ async def generate_thumbnail(user: str, filename: str):
 
 
 @app.post('/meme/', tags=['meme'])
-async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fastapi.Body(''), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fastapi.Body(''), user=Depends(get_user_from_query_token), db=Depends(crud.get_db)):
     uuid = str(uuid4())
     tags = get_tags(tags)
     ext = pathlib.Path(file.filename).suffix.lower()
@@ -111,7 +119,7 @@ async def upload(file: fastapi.UploadFile = fastapi.File(...), tags: str = fasta
 
 
 @app.get('/meme/', tags=['meme'])
-async def query(tag: str = Query(None), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+async def query(tag: str = Query(None), user=Depends(get_user_from_query_token), db=Depends(crud.get_db)):
     tags = get_tags(tag)
     result = crud.get_all_files(db, user)
     for i in range(0, len(tags)):
@@ -126,7 +134,7 @@ async def query(tag: str = Query(None), user=Depends(get_user_from_token), db=De
 
 
 @app.delete('/meme/', tags=['meme'])
-async def delete(uuid: str = Query(...), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+async def delete(uuid: str = Query(...), user=Depends(get_user_from_query_token), db=Depends(crud.get_db)):
     try:
         meta_path = pathlib.Path(META_DATA_PATH, user, f'{uuid}.yml')
         with open(meta_path, 'r') as f:
@@ -154,12 +162,12 @@ async def delete(uuid: str = Query(...), user=Depends(get_user_from_token), db=D
 
 
 @app.get('/tag/', tags=['tags'])
-async def get_all_tags(user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+async def get_all_tags(user=Depends(get_user_from_query_token), db=Depends(crud.get_db)):
     return crud.tag_get_all(db, user)
 
 
 @app.put('/tag/', tags=['tags'])
-async def add_tag(tag: str = Query(...), uuid: str = Query(...), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+async def add_tag(tag: str = Body(...), uuid: str = Body(...), user=Depends(get_user_from_param_token), db=Depends(crud.get_db)):
     if not crud.check_if_file_uuid_exist(db, uuid, user):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     tags = get_tags(tag)
@@ -169,7 +177,7 @@ async def add_tag(tag: str = Query(...), uuid: str = Query(...), user=Depends(ge
 
 
 @app.delete('/tag/', tags=['tags'])
-async def delete_tag(tag: str = Query(...), uuid: str = Query(...), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+async def delete_tag(tag: str = Query(...), uuid: str = Query(...), user=Depends(get_user_from_query_token), db=Depends(crud.get_db)):
     if not crud.check_if_file_uuid_exist(db, uuid, user):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     tags = get_tags(tag)
@@ -179,12 +187,12 @@ async def delete_tag(tag: str = Query(...), uuid: str = Query(...), user=Depends
 
 
 @app.get('/user/', tags=['user'])
-async def get_user(user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+async def get_user(user=Depends(get_user_from_query_token), db=Depends(crud.get_db)):
     return {"user": user, 'admin': crud.is_admin(db, user)}
 
 
 @app.put('/user/', tags=['user'])
-async def new_user(name: str = Body(...), password: str = Body(...), user=Depends(get_user_from_token), db=Depends(crud.get_db)):
+async def new_user(name: str = Body(...), password: str = Body(...), user=Depends(get_user_from_param_token), db=Depends(crud.get_db)):
     if not crud.is_admin(db, user):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
     if crud.is_user(db, name):

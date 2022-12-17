@@ -28,6 +28,7 @@ const previewItem = reactive({ tags: [], uuid: "", filename: "" });
 const isRightDrawerOpen = ref(false);
 const isTokenValid = ref(false);
 const thumbnails = ref(null);
+const updateStackCount = ref(0);
 let thumbnailWidth = new Map();
 let thumbnailHeight = new Map();
 
@@ -88,16 +89,19 @@ function resizeThumbnail(item) {
 }
 
 async function checkToken() {
+  updateStackCount.value++;
   await api
     .get("user/", {
       params: { token: store.token },
     })
     .then(() => (isTokenValid.value = true))
-    .catch(() => (isTokenValid.value = false));
+    .catch(() => (isTokenValid.value = false))
+    .finally(() => updateStackCount.value--);
 }
 
 async function updateTags() {
   if (isTokenValid.value) {
+    updateStackCount.value++;
     await api
       .get("tag/", {
         params: { token: store.token },
@@ -107,7 +111,8 @@ async function updateTags() {
       })
       .catch(() => {
         tags.value = [];
-      });
+      })
+      .finally(() => updateStackCount.value--);
     tags.value.sort((a, b) => b.count - a.count);
   } else {
     tags.value = [];
@@ -124,6 +129,7 @@ function shuffleArray(arr) {
 
 async function updateMemes() {
   if (isTokenValid.value) {
+    updateStackCount.value++;
     await api
       .get("meme/", {
         params: { token: store.token, tag: query.value },
@@ -133,16 +139,19 @@ async function updateMemes() {
       })
       .catch(() => {
         records.value = [];
-      });
+      })
+      .finally(() => updateStackCount.value--);
   } else {
     records.value = [];
   }
 }
 
 async function updateAll() {
+  updateStackCount.value++;
   await checkToken();
   await updateTags();
   await updateMemes();
+  updateStackCount.value--;
 }
 
 function setQuery(value) {
@@ -181,7 +190,14 @@ store.$subscribe(async (mutation, state) => {
             </template>
           </q-input>
         </q-toolbar-title>
-        <q-btn dense flat round :icon="fasRotate" @click="updateAll" />
+        <q-btn
+          dense
+          flat
+          round
+          :icon="fasRotate"
+          @click="updateAll"
+          :class="{ 'rotating': updateStackCount > 0 }"
+        />
         <q-btn dense flat round :icon="fasBars" @click="toggleRightDrawer" />
       </q-toolbar>
     </q-header>
@@ -206,7 +222,11 @@ store.$subscribe(async (mutation, state) => {
         <div
           class="full-width row wrap justify-around items-center content-center"
         >
-          <transition-group appear enter-active-class="animated fadeInUpBig" leave-active-class="animated fadeOutDownBig">
+          <transition-group
+            appear
+            enter-active-class="animated fadeInUp"
+            leave-active-class="animated fadeOutDown"
+          >
             <q-img
               v-for="item in records"
               :width="computedThumbnailWidth(item.uuid)"
@@ -268,3 +288,15 @@ store.$subscribe(async (mutation, state) => {
     </q-page-container>
   </q-layout>
 </template>
+
+<style scoped>
+.rotating {
+  animation: wtf 1s linear 0.1s infinite;
+}
+
+@keyframes wtf {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+</style>

@@ -21,9 +21,9 @@ jobs:
           dir: ./meme_ui
       - name: compression
         uses: a7ul/tar-action@v1.1.0
+        working-directory: ./meme_ui/dist/
         with:
           command: c
-          cwd: ./meme_ui/dist/
           files: .*
           outPath: ui.tar.gz
       - uses: marvinpinto/action-automatic-releases@latest
@@ -44,7 +44,6 @@ jobs:
         os: [ubuntu-18.04]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}

@@ -32,7 +32,7 @@ jobs:
           prerelease: true
           automatic_release_tag: "latest"
           title: "auto release"
-          files: ./meme_ui/dist/ui.tar.gz
+          files: ./meme_ui/ui.tar.gz
 
   dev-smoke-test:
     needs: dev-build-ui

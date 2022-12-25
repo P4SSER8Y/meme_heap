@@ -24,7 +24,7 @@ jobs:
         with:
           cwd: ./meme_ui/dist
           command: c
-          files: *
+          files: "*"
           outPath: ui.tar.gz
       - uses: marvinpinto/action-automatic-releases@latest
         with:

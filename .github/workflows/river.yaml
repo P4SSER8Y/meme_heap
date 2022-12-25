@@ -1,4 +1,4 @@
-name: smoke-test
+name: dev-smoke-test
 on:
   push:
     branches:
@@ -21,8 +21,8 @@ jobs:
           dir: ./meme_ui
       - name: compression
         uses: a7ul/tar-action@v1.1.0
-        working-directory: ./meme_ui/dist/
         with:
+          cwd: ../meme_ui/dist/
           command: c
           files: .*
           outPath: ui.tar.gz

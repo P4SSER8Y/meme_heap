@@ -70,7 +70,7 @@ async def push(path, tags):
     global token
     try:
         async with httpx.AsyncClient() as client:
-            ret = await client.post(f"{url}meme/", params={'token': token}, data={"tags": tags}, files={'file': open(path, 'rb')})
+            ret = await client.post(url, params={'token': token}, data={"tags": tags}, files={'file': open(path, 'rb')})
             print(f"push {path} {ret.is_success}")
             await client.aclose()
             if ret.is_success:

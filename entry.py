@@ -7,10 +7,7 @@ import os
 routers: List[FastAPIRouterWrapper] = [MemeRouter]
 
 is_dev_mode = os.environ.get('DEVELOP', None)
-if is_dev_mode:
-    app = FastAPI()
-else:
-    app = FastAPI(docs_url=None, redoc_url=None)
+app = FastAPI(redoc_url=None)
 
 for item in routers:
     app.include_router(item.app, prefix='/meme')

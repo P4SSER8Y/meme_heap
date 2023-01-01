@@ -1,5 +1,6 @@
 from prompt_toolkit import prompt
 from prompt_toolkit import print_formatted_text as print
+from prompt_toolkit.completion import WordCompleter
 import click
 import httpx
 import os
@@ -12,6 +13,8 @@ import asyncio
 q = Queue()
 loop = None
 e = asyncio.Event()
+url = ""
+token = ""
 
 
 def thread_preview():
@@ -34,11 +37,13 @@ def preview_and_get_tags(path):
     prompt
     print(f"{path}")
     try:
+        tags = httpx.get(url=f"{url}tag/", params={'token': token}).json()
+        tags = [x['tag'] for x in tags]
         img = cv2.imread(str(path))
         if img is None:
             return None
         q.put(img)
-        return(prompt("Tags>> "))
+        return(prompt("Tags>> ", completer=WordCompleter(tags)))
     except Exception as e:
         print(f"{path} is invalid: {e}")
         return None
@@ -60,10 +65,12 @@ def stop_loop():
     asyncio.run_coroutine_threadsafe(f(), loop)
 
 
-async def push(url, path, tags):
+async def push(path, tags):
+    global url
+    global token
     try:
         async with httpx.AsyncClient() as client:
-            ret = await client.post(url, data={"tags": tags}, files={'file': open(path, 'rb')})
+            ret = await client.post(f"{url}meme/", params={'token': token}, data={"tags": tags}, files={'file': open(path, 'rb')})
             print(f"push {path} {ret.is_success}")
             await client.aclose()
             if ret.is_success:
@@ -75,8 +82,10 @@ async def push(url, path, tags):
 @click.command()
 @click.argument('base', type=click.Path(exists=True, file_okay=False, dir_okay=True, writable=True, readable=True))
 def main(base):
+    global url
+    global token
     url = prompt('URL=? ')
-    print(url)
+    token = prompt('token=? ')
     print(f"reading {base}")
     prv = threading.Thread(target=thread_preview)
     t = threading.Thread(target=start_loop)
@@ -87,7 +96,7 @@ def main(base):
             for file in files:
                 tags: str = preview_and_get_tags(Path(root, file))
                 if (tags is not None) and (len(tags.strip()) > 0):
-                    asyncio.run_coroutine_threadsafe(push(url, Path(root, file), tags), loop)
+                    asyncio.run_coroutine_threadsafe(push(Path(root, file), tags), loop)
     finally:
         stop_loop()
         q.put(None)

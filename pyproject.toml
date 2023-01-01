@@ -9,7 +9,7 @@ license = "MIT"
 
 [[tool.poetry.source]]
 name = "tencent"
-url = "http://mirrors.cloud.tencent.com/pypi/simple"
+url = "https://mirrors.cloud.tencent.com/pypi/simple"
 default = false
 secondary = false
 

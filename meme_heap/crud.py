@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker, Session
 import os
@@ -151,6 +151,19 @@ def get_file_info_by_uuid(db: Session, uuid: str):
     tags = [x['tag'] for x in tags]
     filename = db.query(models.File).filter(models.File.uuid == uuid).one()
     return {'uuid': uuid, 'tags': tags, 'filename': filename.filename, "thumbnail": filename.thumbnail}
+
+
+def merge_file_tags(db: Session, uuids: List[str], owner: str):
+    tags = db.query(models.Tag.tag).filter(models.Tag.uuid == uuids[0]).all()
+    tags = [x['tag'] for x in tags]
+    for uuid in uuids[1:]:
+        t = db.query(models.Tag.tag).filter(models.Tag.uuid == uuid).all()
+        for item in t:
+            tag = item['tag']
+            if not tag in tags:
+                tags.append(tag)
+                tag_add(db, uuids[0], tag, owner)
+    return tags
 
 
 def get_all_files(db: Session, owner: str):

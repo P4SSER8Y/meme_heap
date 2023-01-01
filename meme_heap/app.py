@@ -136,6 +136,7 @@ async def query(tag: str = Query(None), user=Depends(get_user_from_query_token),
 @app.delete('/meme/', tags=['meme'])
 async def delete(uuid: str = Query(...), user=Depends(get_user_from_query_token), db=Depends(crud.get_db)):
     try:
+        logger.warning("delete {}", uuid)
         meta_path = pathlib.Path(META_DATA_PATH, user, f'{uuid}.yml')
         with open(meta_path, 'r') as f:
             data = yaml.load(f, Loader=yaml.SafeLoader)
@@ -159,6 +160,14 @@ async def delete(uuid: str = Query(...), user=Depends(get_user_from_query_token)
     finally:
         crud.file_delete(db, uuid)
     return {"uuid": uuid}
+
+
+@app.post('/meme/merge/', tags=['meme'])
+async def merge(uuids: List[str] = Body(...), user=Depends(get_user_from_param_token), db=Depends(crud.get_db)):
+    crud.merge_file_tags(db, uuids, user)
+    for item in uuids[1:]:
+        await delete(uuid=item, user=user, db=db)
+    return {"status": "ok"}
 
 
 @app.get('/tag/', tags=['tags'])

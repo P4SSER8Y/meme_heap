@@ -13,6 +13,9 @@ import {
   fasQuestion,
 } from "@quasar/extras/fontawesome-v6";
 import { useRoute, useRouter } from "vue-router";
+import seedrandom from "seedrandom";
+
+const loadedTs = Date.parse(new Date());
 
 const $router = useRouter();
 const $route = useRoute();
@@ -120,8 +123,9 @@ async function updateTags() {
 }
 
 function shuffleArray(arr) {
+  var rng = seedrandom(loadedTs);
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;

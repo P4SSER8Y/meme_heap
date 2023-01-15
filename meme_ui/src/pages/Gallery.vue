@@ -14,6 +14,7 @@ import {
 } from "@quasar/extras/fontawesome-v6";
 import { useRoute, useRouter } from "vue-router";
 import seedrandom from "seedrandom";
+import PreviewLayout from "src/components/PreviewLayout.vue";
 
 const loadedTs = Date.parse(new Date());
 
@@ -84,8 +85,10 @@ function resizeThumbnail(item) {
     (x) => x.$el.attributes.uuid.value == item.uuid
   );
   let img = thumbnails.value[index].$el.getElementsByTagName("img")[0];
-  let width = (img.naturalWidth * 256) / img.naturalHeight;
-  let height = 256;
+  // let width = (img.naturalWidth * 256) / img.naturalHeight;
+  // let height = 256;
+  let width = 256;
+  let height = (img.naturalHeight * 256) / img.naturalWidth;
 
   getThumbnailWidth(item.uuid).value = width + "px";
   getThumbnailHeight(item.uuid).value = height + "px";
@@ -271,29 +274,22 @@ function addTag(arg) {
             </q-chip>
           </span>
         </div>
-        <div
-          class="full-width row wrap justify-around items-center content-center"
-        >
-          <transition-group
-            appear
-            enter-active-class="animated fadeInUp"
-            leave-active-class="animated fadeOutDown"
-          >
-            <q-img
-              v-for="item in records"
-              :width="computedThumbnailWidth(item.uuid)"
-              :height="computedThumbnailHeight(item.uuid)"
-              loading="lazy"
-              :src="item.thumbnail"
-              fit="scale-down"
-              @click="preview(item)"
-              @load="resizeThumbnail(item)"
-              :key="item.uuid"
-              ref="thumbnails"
-              :uuid="item.uuid"
-            />
-          </transition-group>
-        </div>
+        <PreviewLayout :spacing="5" :width="256" :maxWidth="2560">
+          <q-img
+            v-for="item in records"
+            :width="computedThumbnailWidth(item.uuid)"
+            :height="computedThumbnailHeight(item.uuid)"
+            loading="lazy"
+            :src="item.thumbnail"
+            fit="cover"
+            @click="preview(item)"
+            @load="resizeThumbnail(item)"
+            :key="item.uuid"
+            ref="thumbnails"
+            :uuid="item.uuid"
+            style="margin: 5px"
+          />
+        </PreviewLayout>
       </q-page>
 
       <q-drawer

@@ -2,7 +2,7 @@ from PIL import Image
 from loguru import logger
 from pathlib import Path
 
-async def generate_thumbnail(src: str | Path, dst: str | Path):
+async def generate_thumbnail(src, dst):
     try:
         img = Image.open(src)
         img.seek(0)

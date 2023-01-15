@@ -70,9 +70,9 @@ async def generate_thumbnail(user: str, filename: str):
         img.seek(0)
         img = img.convert('RGB')
         logger.debug(f'processing {filename}: HxV={img.width}x{img.height}')
-        if img.height >= 256:
-            width = img.width * 256 // img.height
-            img = img.resize([width, 256])
+        if img.width >= 256:
+            height = img.height * 256 // img.width
+            img = img.resize([256, height])
             logger.debug(f'resize to {img.width}x{img.height}')
         tn = pathlib.Path(filename).stem + '.jpg'
         img.save(pathlib.Path(THUMBNAIL_DATA_PATH, user, tn))

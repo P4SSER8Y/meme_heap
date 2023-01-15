@@ -10,8 +10,8 @@ import yaml
 import pathlib
 import aiofiles
 from . import crud
-from PIL import Image
 from loguru import logger
+from . import thumbnail_generator
 
 app = fastapi.APIRouter()
 statics = {}
@@ -64,21 +64,11 @@ def get_tags(tag: Optional[str]):
 
 
 async def generate_thumbnail(user: str, filename: str):
-    suffix = pathlib.Path(filename).suffix.lower()
-    try:
-        img = Image.open(pathlib.Path(RAW_DATA_PATH, user, filename))
-        img.seek(0)
-        img = img.convert('RGB')
-        logger.debug(f'processing {filename}: HxV={img.width}x{img.height}')
-        if img.width >= 256:
-            height = img.height * 256 // img.width
-            img = img.resize([256, height])
-            logger.debug(f'resize to {img.width}x{img.height}')
-        tn = pathlib.Path(filename).stem + '.jpg'
-        img.save(pathlib.Path(THUMBNAIL_DATA_PATH, user, tn))
-        return tn
-    except Exception as e:
-        logger.exception('nani?')
+    src = pathlib.Path(RAW_DATA_PATH, user, filename)
+    dst = pathlib.Path(THUMBNAIL_DATA_PATH, user, pathlib.Path(filename).stem + '.jpg')
+    if await thumbnail_generator.generate_thumbnail(src, dst):
+        return dst.name
+    else:
         return None
 
 

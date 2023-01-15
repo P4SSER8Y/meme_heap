@@ -15,6 +15,7 @@ import {
 import { useRoute, useRouter } from "vue-router";
 import seedrandom from "seedrandom";
 import PreviewLayout from "src/components/PreviewLayout.vue";
+import Thumbnail from "src/components/Thumbnail.vue";
 
 const loadedTs = Date.parse(new Date());
 
@@ -31,10 +32,8 @@ const isPreviewing = ref(false);
 const previewItem = reactive({ tags: [], uuid: "", filename: "" });
 const isRightDrawerOpen = ref(false);
 const isTokenValid = ref(false);
-const thumbnails = ref(null);
 const updateStackCount = ref(0);
-let thumbnailWidth = new Map();
-let thumbnailHeight = new Map();
+const maxElementWidth = ref(256);
 
 $router.afterEach(async () => {
   if ($route.params.t) {
@@ -56,42 +55,6 @@ function preview(item) {
   previewItem.filename = item.filename;
   previewItem.tags = item.tags;
   previewItem.uuid = item.uuid;
-}
-
-function getThumbnailWidth(uuid) {
-  if (!thumbnailWidth.has(uuid)) {
-    thumbnailWidth.set(uuid, ref("256px"));
-  }
-  return thumbnailWidth.get(uuid);
-}
-
-function getThumbnailHeight(uuid) {
-  if (!thumbnailHeight.has(uuid)) {
-    thumbnailHeight.set(uuid, ref("256px"));
-  }
-  return thumbnailHeight.get(uuid);
-}
-
-const computedThumbnailWidth = computed(
-  () => (uuid) => getThumbnailWidth(uuid).value
-);
-
-const computedThumbnailHeight = computed(
-  () => (uuid) => getThumbnailHeight(uuid).value
-);
-
-function resizeThumbnail(item) {
-  let index = thumbnails.value.findIndex(
-    (x) => x.$el.attributes.uuid.value == item.uuid
-  );
-  let img = thumbnails.value[index].$el.getElementsByTagName("img")[0];
-  // let width = (img.naturalWidth * 256) / img.naturalHeight;
-  // let height = 256;
-  let width = 256;
-  let height = (img.naturalHeight * 256) / img.naturalWidth;
-
-  getThumbnailWidth(item.uuid).value = width + "px";
-  getThumbnailHeight(item.uuid).value = height + "px";
 }
 
 async function checkToken() {
@@ -220,6 +183,10 @@ function addTag(arg) {
   }
   tags.value.sort((a, b) => b.count - a.count);
 }
+
+function updateMaxElementWidth(width) {
+  maxElementWidth.value = width >= 256 ? 256 : width;
+}
 </script>
 
 <template>
@@ -274,21 +241,19 @@ function addTag(arg) {
             </q-chip>
           </span>
         </div>
-        <PreviewLayout :spacing="5" :width="256" :maxWidth="2560">
-          <q-img
+        <PreviewLayout
+          :margin="5"
+          :width="maxElementWidth"
+          :maxWidth="2560"
+          @update-max-element-width="updateMaxElementWidth"
+        >
+          <Thumbnail
             v-for="item in records"
-            :width="computedThumbnailWidth(item.uuid)"
-            :height="computedThumbnailHeight(item.uuid)"
-            loading="lazy"
-            :src="item.thumbnail"
-            fit="cover"
+            :data="item"
             @click="preview(item)"
-            @load="resizeThumbnail(item)"
             :key="item.uuid"
-            ref="thumbnails"
-            :uuid="item.uuid"
-            style="margin: 5px"
-          />
+            :width="maxElementWidth"
+          ></Thumbnail>
         </PreviewLayout>
       </q-page>
 

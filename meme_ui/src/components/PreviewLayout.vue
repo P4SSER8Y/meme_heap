@@ -46,6 +46,7 @@ const break_at = computed(() => {
     :break-at="break_at"
     :break-by-container="true"
     ref="main"
+    align-content="center"
   >
     <slot></slot>
   </VueFlexWaterfall>

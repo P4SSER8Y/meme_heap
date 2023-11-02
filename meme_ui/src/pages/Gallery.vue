@@ -16,6 +16,7 @@ import { useRoute, useRouter } from "vue-router";
 import seedrandom from "seedrandom";
 import PreviewLayout from "src/components/PreviewLayout.vue";
 import Thumbnail from "src/components/Thumbnail.vue";
+import passwordless from "@passwordless-id/connect";
 
 const loadedTs = Date.parse(new Date());
 
@@ -34,6 +35,7 @@ const isRightDrawerOpen = ref(false);
 const isTokenValid = ref(false);
 const updateStackCount = ref(0);
 const maxElementWidth = ref(256);
+const scope = 'openid'
 
 $router.afterEach(async () => {
   if ($route.params.t) {
@@ -59,13 +61,22 @@ function preview(item) {
 
 async function checkToken() {
   updateStackCount.value++;
-  await api
-    .get("user/", {
-      params: { token: store.token },
-    })
-    .then(() => (isTokenValid.value = true))
-    .catch(() => (isTokenValid.value = false))
-    .finally(() => updateStackCount.value--);
+  const user = await passwordless.id({ scope: scope });
+  if (user.signedIn && user.scopeGranted)
+  {
+    isTokenValid.value = true;
+    store.token = user.id_token;
+  }
+  else
+  {
+    await api
+      .get("user/", {
+        params: { token: store.token },
+      })
+      .then(() => (isTokenValid.value = true))
+      .catch(() => (isTokenValid.value = false))
+      .finally(() => updateStackCount.value--);
+  }
 }
 
 async function updateTags() {
@@ -281,6 +292,9 @@ function updateMaxElementWidth(width) {
                 </template>
               </q-input>
             </q-form>
+          </q-card-section>
+          <q-card-section>
+              <q-btn @click="() => passwordless.auth({})"></q-btn>
           </q-card-section>
         </q-card>
         <q-separator spaced="lg" />

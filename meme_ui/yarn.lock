@@ -33,6 +33,11 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
+"@passwordless-id/connect@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.npmmirror.com/@passwordless-id/connect/-/connect-1.2.1.tgz#8eb4d60837825ea6f91e9586d5c2345de3233e26"
+  integrity sha512-EIAFA/tSIeZKv9TfqmlBcKKb1B0+5ZHty/VJMNt59IrYznisj3qx47FICombWTJw2ZL6QP4Bzq8RZPkmlIyVWw==
+
 "@positron/stack-trace@1.0.0":
   version "1.0.0"
   resolved "https://mirrors.cloud.tencent.com/npm/@positron%2fstack-trace/-/stack-trace-1.0.0.tgz#14fcc712a530038ef9be1ce6952315a839f466a8"

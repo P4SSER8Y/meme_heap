@@ -1,6 +1,5 @@
 <script setup name="Gallery">
 import { ref, reactive, computed, watch, onMounted } from "vue";
-import { useStore } from "src/stores/store";
 import { api } from "src/boot/axios";
 import LargePreview from "src/components/LargePreview.vue";
 import UploadDialog from "src/components/UploadDialog.vue";
@@ -22,7 +21,6 @@ const loadedTs = Date.parse(new Date());
 
 const $router = useRouter();
 const $route = useRoute();
-const store = useStore();
 
 const emit = defineEmits(["setTag"]);
 
@@ -35,11 +33,12 @@ const isRightDrawerOpen = ref(false);
 const isTokenValid = ref(false);
 const updateStackCount = ref(0);
 const maxElementWidth = ref(256);
-const scope = 'openid'
+const scope = 'openid';
+const token = ref("");
 
 $router.afterEach(async () => {
   if ($route.params.t) {
-    store.token = $route.params.t;
+    token.value = $route.params.t;
   }
   await updateAll();
 });
@@ -65,13 +64,13 @@ async function checkToken() {
   if (user.signedIn && user.scopeGranted)
   {
     isTokenValid.value = true;
-    store.token = user.id_token;
+    token.value = user.profile.sub;
   }
   else
   {
     await api
       .get("user/", {
-        params: { token: store.token },
+        params: { token: token.value },
       })
       .then(() => (isTokenValid.value = true))
       .catch(() => (isTokenValid.value = false))
@@ -84,7 +83,7 @@ async function updateTags() {
     updateStackCount.value++;
     await api
       .get("tag/", {
-        params: { token: store.token },
+        params: { token: token.value },
       })
       .then((response) => {
         tags.value = response.data;
@@ -113,7 +112,7 @@ async function updateMemes() {
     updateStackCount.value++;
     await api
       .get("meme/", {
-        params: { token: store.token, tag: query.value },
+        params: { token: token.value, tag: query.value },
       })
       .then((response) => {
         records.value = shuffleArray(response.data);
@@ -140,15 +139,11 @@ function setQuery(value) {
 }
 
 function submitToken(event) {
-  $router.push({ path: "/" + store.token });
+  $router.push({ path: "/" + token.value });
 }
 
 watch(query, async (newQuery) => {
   await updateMemes();
-});
-
-store.$subscribe(async (mutation, state) => {
-  await updateAll();
 });
 
 function removeTag(arg) {
@@ -279,7 +274,7 @@ function updateMaxElementWidth(width) {
             <q-form @submit="submitToken">
               <q-input
                 label="token"
-                v-model="store.token"
+                v-model="token"
                 :error="!isTokenValid"
                 debounce="200"
                 clearable
@@ -294,18 +289,18 @@ function updateMaxElementWidth(width) {
             </q-form>
           </q-card-section>
           <q-card-section>
-              <q-btn @click="() => passwordless.auth({})" class="full-width">
+              <q-btn @click="() => passwordless.auth({ scope: scope })" class="full-width">
                 Auth
               </q-btn>
           </q-card-section>
         </q-card>
         <q-separator spaced="lg" />
-        <UploadDialog :token="store.token" @success="updateAll" />
+        <UploadDialog :token="token" @success="updateAll" />
       </q-drawer>
 
       <q-dialog v-model="isPreviewing">
         <LargePreview
-          :token="store.token"
+          :token="token"
           :tags="previewItem.tags"
           :filename="previewItem.filename"
           :uuid="previewItem.uuid"

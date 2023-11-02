@@ -74,8 +74,10 @@ module.exports = configure(function (/* ctx */) {
       open: false, // opens browser window automatically
       proxy: {
         "^/meme/(r|t|meme|token|user|tag)": {
-          target: "http://192.168.31.110:33333/",
+          target: "https://z.32323235.xyz/",
           changeOrigin: true,
+          secure: false,
+          ssl: false,
         },
       },
     },

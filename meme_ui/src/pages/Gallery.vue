@@ -294,7 +294,9 @@ function updateMaxElementWidth(width) {
             </q-form>
           </q-card-section>
           <q-card-section>
-              <q-btn @click="() => passwordless.auth({})"></q-btn>
+              <q-btn @click="() => passwordless.auth({})" class="full-width">
+                Auth
+              </q-btn>
           </q-card-section>
         </q-card>
         <q-separator spaced="lg" />

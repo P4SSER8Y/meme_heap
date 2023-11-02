@@ -67,6 +67,7 @@ async function checkToken() {
     isTokenValid.value = true;
     token.value = user.profile.sub;
     isLoggedIn.value = true;
+    updateStackCount.value--;
   }
   else
   {

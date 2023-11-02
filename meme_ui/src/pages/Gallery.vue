@@ -35,6 +35,7 @@ const updateStackCount = ref(0);
 const maxElementWidth = ref(256);
 const scope = 'openid';
 const token = ref("");
+const isLoggedIn = ref(false);
 
 $router.afterEach(async () => {
   if ($route.params.t) {
@@ -65,9 +66,11 @@ async function checkToken() {
   {
     isTokenValid.value = true;
     token.value = user.profile.sub;
+    isLoggedIn.value = true;
   }
   else
   {
+    isLoggedIn.value = false;
     await api
       .get("user/", {
         params: { token: token.value },
@@ -289,8 +292,11 @@ function updateMaxElementWidth(width) {
             </q-form>
           </q-card-section>
           <q-card-section>
-              <q-btn @click="() => passwordless.auth({ scope: scope })" class="full-width">
-                Auth
+              <q-btn v-if="!isLoggedIn" @click="() => passwordless.auth({ scope: scope })" class="full-width">
+                Knock In
+              </q-btn>
+              <q-btn v-else @click="() => passwordless.logout()" class="full-width">
+                Knock Out
               </q-btn>
           </q-card-section>
         </q-card>

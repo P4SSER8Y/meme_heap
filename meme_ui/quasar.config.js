@@ -50,7 +50,7 @@ module.exports = configure(function (/* ctx */) {
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
-      publicPath: "/meme",
+      publicPath: "/public",
       // analyze: true,
       // env: {},
       // rawDefine: {}

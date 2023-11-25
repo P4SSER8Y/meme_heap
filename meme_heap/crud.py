@@ -19,7 +19,7 @@ DEFAULT_ADMIN_PASSWORD = os.environ.get('MEME_DB_ADMIN_PASSWORD', 'admin')
 DEFAULT_ADMIN_TOKEN = os.environ.get('MEME_DB_ADMIN_TOKEN', 'admin')
 TOKEN_SALT = os.environ.get('MEME_TOKEN_SALT', 'memeMEME1v131v13')
 JWT_KEY = base64.b64decode(os.environ.get('MEME_TOKEN_JWT_KEY', ''))
-JWT_FAMILY == os.environ.get('MEME_JWT_FAMILY', 'meme')
+JWT_FAMILY = os.environ.get('MEME_JWT_FAMILY', 'meme')
 
 
 engine = create_engine(DB_URL, connect_args={'check_same_thread': False})

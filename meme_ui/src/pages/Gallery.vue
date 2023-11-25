@@ -15,7 +15,8 @@ import { useRoute, useRouter } from "vue-router";
 import seedrandom from "seedrandom";
 import PreviewLayout from "src/components/PreviewLayout.vue";
 import Thumbnail from "src/components/Thumbnail.vue";
-import passwordless from "@passwordless-id/connect";
+import { raven } from "src/raven";
+import { useLocalStorage } from "@vueuse/core"
 
 const loadedTs = Date.parse(new Date());
 
@@ -34,15 +35,8 @@ const isTokenValid = ref(false);
 const updateStackCount = ref(0);
 const maxElementWidth = ref(256);
 const scope = 'openid';
-const token = ref("");
+const token = useLocalStorage('token', '');
 const isLoggedIn = ref(false);
-
-$router.afterEach(async () => {
-  if ($route.params.t) {
-    token.value = $route.params.t;
-  }
-  await updateAll();
-});
 
 onMounted(async () => {
   await updateAll();
@@ -61,25 +55,14 @@ function preview(item) {
 
 async function checkToken() {
   updateStackCount.value++;
-  const user = await passwordless.id({ scope: scope });
-  if (user.signedIn && user.scopeGranted)
-  {
-    isTokenValid.value = true;
-    token.value = user.profile.sub;
-    isLoggedIn.value = true;
-    updateStackCount.value--;
-  }
-  else
-  {
-    isLoggedIn.value = false;
-    await api
-      .get("user/", {
-        params: { token: token.value },
-      })
-      .then(() => (isTokenValid.value = true))
-      .catch(() => (isTokenValid.value = false))
-      .finally(() => updateStackCount.value--);
-  }
+  isLoggedIn.value = false;
+  await api
+    .get("user/", {
+      params: { token: token.value },
+    })
+    .then(() => (isTokenValid.value = true))
+    .catch(() => (isTokenValid.value = false))
+    .finally(() => updateStackCount.value--);
 }
 
 async function updateTags() {
@@ -206,26 +189,13 @@ function updateMaxElementWidth(width) {
         <q-avatar v-if="isTokenValid">{{ records.length }}</q-avatar>
         <q-avatar v-else :icon="fasQuestion"></q-avatar>
         <q-toolbar-title>
-          <q-input
-            v-model="query"
-            label="tags"
-            clearable
-            borderless
-            debounce="200"
-          >
+          <q-input v-model="query" label="tags" clearable borderless debounce="200">
             <template #prepend>
               <q-icon :name="fasTags" />
             </template>
           </q-input>
         </q-toolbar-title>
-        <q-btn
-          dense
-          flat
-          round
-          :icon="fasRotate"
-          @click="updateAll"
-          :class="{ rotating: updateStackCount > 0 }"
-        >
+        <q-btn dense flat round :icon="fasRotate" @click="updateAll" :class="{ rotating: updateStackCount > 0 }">
           <q-tooltip> sync </q-tooltip>
         </q-btn>
         <q-btn dense flat round :icon="fasBars" @click="toggleRightDrawer">
@@ -236,69 +206,39 @@ function updateMaxElementWidth(width) {
 
     <q-page-container>
       <q-page padding>
-        <div
-          class="full-width row wrap justify-start items-start content-center"
-        >
+        <div class="full-width row wrap justify-start items-start content-center">
           <span v-for="item in tags">
-            <q-chip
-              v-if="item.count > 1"
-              clickable
-              outline
-              @click="setQuery(item)"
-            >
+            <q-chip v-if="item.count > 1" clickable outline @click="setQuery(item)">
               <q-avatar>{{ item.count }}</q-avatar>
               {{ item.tag }}
             </q-chip>
           </span>
         </div>
-        <PreviewLayout
-          :margin="5"
-          :width="maxElementWidth"
-          :maxWidth="2560"
-          @update-max-element-width="updateMaxElementWidth"
-        >
-          <Thumbnail
-            v-for="item in records"
-            :data="item"
-            @click="preview(item)"
-            :key="item.uuid"
-            :width="maxElementWidth"
-          ></Thumbnail>
+        <PreviewLayout :margin="5" :width="maxElementWidth" :maxWidth="2560"
+          @update-max-element-width="updateMaxElementWidth">
+          <Thumbnail v-for="item in records" :data="item" @click="preview(item)" :key="item.uuid"
+            :width="maxElementWidth"></Thumbnail>
         </PreviewLayout>
       </q-page>
 
-      <q-drawer
-        v-model="isRightDrawerOpen"
-        side="right"
-        overlay
-        behavior="mobile"
-      >
+      <q-drawer v-model="isRightDrawerOpen" side="right" overlay behavior="mobile">
         <q-card>
           <q-card-section>
             <q-form @submit="submitToken">
-              <q-input
-                label="token"
-                v-model="token"
-                :error="!isTokenValid"
-                debounce="200"
-                clearable
-              >
+              <q-input label="token" v-model="token" :error="!isTokenValid" debounce="200" clearable>
                 <template #prepend>
-                  <q-icon
-                    :name="isTokenValid ? fasLockOpen : fasLock"
-                    :color="isTokenValid ? '' : 'negative'"
-                  />
+                  <q-icon :name="isTokenValid ? fasLockOpen : fasLock" :color="isTokenValid ? '' : 'negative'" />
                 </template>
               </q-input>
             </q-form>
           </q-card-section>
           <q-card-section>
-              <q-btn v-if="!isLoggedIn" @click="() => passwordless.auth({ scope: scope })" class="full-width">
-                Knock In
-              </q-btn>
-              <q-btn v-else @click="() => passwordless.logout()" class="full-width">
-                Knock Out
-              </q-btn>
+            <q-btn v-if="!isTokenValid" @click="() => raven('https://hodor.32323235.xyz/')" class="full-width">
+              Knock In
+            </q-btn>
+            <q-btn v-else @click="() => passwordless.logout()" class="full-width">
+              Knock Out
+            </q-btn>
           </q-card-section>
         </q-card>
         <q-separator spaced="lg" />
@@ -306,16 +246,8 @@ function updateMaxElementWidth(width) {
       </q-drawer>
 
       <q-dialog v-model="isPreviewing">
-        <LargePreview
-          :token="token"
-          :tags="previewItem.tags"
-          :filename="previewItem.filename"
-          :uuid="previewItem.uuid"
-          @hide="() => (isPreviewing = false)"
-          @update="updateAll"
-          @removeTag="removeTag"
-          @addTag="addTag"
-        >
+        <LargePreview :token="token" :tags="previewItem.tags" :filename="previewItem.filename" :uuid="previewItem.uuid"
+          @hide="() => (isPreviewing = false)" @update="updateAll" @removeTag="removeTag" @addTag="addTag">
         </LargePreview>
       </q-dialog>
     </q-page-container>

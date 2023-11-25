@@ -16,7 +16,7 @@ import seedrandom from "seedrandom";
 import PreviewLayout from "src/components/PreviewLayout.vue";
 import Thumbnail from "src/components/Thumbnail.vue";
 import { raven } from "src/raven";
-import { useLocalStorage } from "@vueuse/core"
+import { useLocalStorage, watchDebounced } from "@vueuse/core"
 
 const loadedTs = Date.parse(new Date());
 
@@ -41,6 +41,11 @@ const isLoggedIn = ref(false);
 onMounted(async () => {
   await updateAll();
 });
+
+watchDebounced(token, 
+  async () => await updateAll(),
+  {debounce: 1000, maxWait: Infinity},
+);
 
 function toggleRightDrawer() {
   isRightDrawerOpen.value = !isRightDrawerOpen.value;
@@ -114,6 +119,7 @@ async function updateMemes() {
 }
 
 async function updateAll() {
+  console.log("update");
   updateStackCount.value++;
   await checkToken();
   await updateTags();

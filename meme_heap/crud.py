@@ -6,6 +6,8 @@ import pathlib
 from . import models
 import bcrypt
 from loguru import logger
+import jwt
+import base64
 
 DATABASE_PATH = pathlib.Path(os.environ.get('MEME_DATA_PATH', './data'), 'sqlite.db')
 os.makedirs(DATABASE_PATH.parent, exist_ok=True)
@@ -16,11 +18,14 @@ DEFAULT_ADMIN_USER = os.environ.get('MEME_DB_ADMIN', 'admin')
 DEFAULT_ADMIN_PASSWORD = os.environ.get('MEME_DB_ADMIN_PASSWORD', 'admin')
 DEFAULT_ADMIN_TOKEN = os.environ.get('MEME_DB_ADMIN_TOKEN', 'admin')
 TOKEN_SALT = os.environ.get('MEME_TOKEN_SALT', 'memeMEME1v131v13')
+JWT_KEY = base64.b64decode(os.environ.get('MEME_TOKEN_JWT_KEY', ''))
+JWT_FAMILY == os.environ.get('MEME_JWT_FAMILY', 'meme')
 
 
 engine = create_engine(DB_URL, connect_args={'check_same_thread': False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 tokenToUserMap = {}
+userSet = set()
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -97,14 +102,24 @@ def token_get_all(db: Session, name: str):
 
 def update_token_to_user_map(db: Session):
     global tokenToUserMap
+    global userSet
     query = db.query(models.Token).all()
     tokenToUserMap.clear()
+    userSet.clear()
     for item in query:
         tokenToUserMap[item.token] = item.name
+        userSet.add(item.name)
 
 
 def get_user_from_token(token: str):
-    return tokenToUserMap.get(get_token_hash(token), None)
+    try:
+        payload: dict[str, any] = jwt.decode(token, JWT_KEY, ['ES256'])
+        if payload['f'] == JWT_FAMILY:
+            if payload['n'] in userSet:
+                return payload['n']
+        return None
+    except Exception as e:
+        return tokenToUserMap.get(get_token_hash(token), None)
 
 
 def is_user(db: Session, name: str):

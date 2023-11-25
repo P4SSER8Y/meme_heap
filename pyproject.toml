@@ -10,8 +10,7 @@ license = "MIT"
 [[tool.poetry.source]]
 name = "tencent"
 url = "https://mirrors.cloud.tencent.com/pypi/simple"
-default = false
-secondary = false
+priority = "primary"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -25,6 +24,8 @@ aiosqlite = "^0.17.0"
 bcrypt = "^4.0.1"
 Pillow = "^9"
 loguru = "^0.6.0"
+pyjwt = "^2.8.0"
+cryptography = "^41.0.5"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.0.0"

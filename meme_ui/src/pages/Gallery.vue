@@ -126,7 +126,6 @@ function setQuery(value) {
 }
 
 function submitToken(event) {
-  $router.push({ path: "/" + token.value });
 }
 
 watch(query, async (newQuery) => {
@@ -234,10 +233,10 @@ function updateMaxElementWidth(width) {
           </q-card-section>
           <q-card-section>
             <q-btn v-if="!isTokenValid" @click="() => raven('https://hodor.32323235.xyz/')" class="full-width">
-              Knock In
+              Greet
             </q-btn>
-            <q-btn v-else @click="() => passwordless.logout()" class="full-width">
-              Knock Out
+            <q-btn v-else @click="() => token = ''" class="full-width">
+              Bye
             </q-btn>
           </q-card-section>
         </q-card>

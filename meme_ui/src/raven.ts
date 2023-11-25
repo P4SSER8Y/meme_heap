@@ -11,7 +11,7 @@ function sleep(timeout: number) {
 async function raven(gate?: string, timeout: number = Infinity): Promise<string> {
   if (!gate) throw Error("Raven doesn't known where to fly");
   localStorage.removeItem('token');
-  let url = new URL('/raven.html', window.location.href);
+  let url = new URL('raven.html', window.location.href);
   url.searchParams.set('gate', gate);
   url.searchParams.set('family', 'meme');
   let win = window.open(url.href, '_blank', 'menubar=no,toolbar=no,location=yes');
